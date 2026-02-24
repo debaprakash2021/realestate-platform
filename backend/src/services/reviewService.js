@@ -49,7 +49,7 @@ class ReviewService {
     const { page = 1, limit = 10, sortBy = 'createdAt' } = query;
     const skip = (Number(page) - 1) * Number(limit);
 
-    const filter = { property: propertyId, isVisible: true };
+    const filter = { property: propertyId };
 
     const [reviews, total] = await Promise.all([
       Review.find(filter)
