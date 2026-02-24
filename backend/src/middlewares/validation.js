@@ -95,6 +95,8 @@ const propertyValidation = {
       .notEmpty().withMessage('Max guests is required')
       .isInt({ min: 1 }).withMessage('Must allow at least 1 guest'),
   ],
+
+  // ─── Property Update Validation ─────────────────────────────────────────
   update: [
     body('title')
       .optional().trim()
@@ -114,9 +116,28 @@ const propertyValidation = {
   ]
 };
 
+// ─── Booking Validation ─────────────────────────────────────────
+const bookingValidation = {
+  create: [
+    body('propertyId')
+      .notEmpty().withMessage('Property ID is required')
+      .isMongoId().withMessage('Invalid property ID'),
+    body('checkIn')
+      .notEmpty().withMessage('Check-in date is required')
+      .isISO8601().withMessage('Invalid check-in date'),
+    body('checkOut')
+      .notEmpty().withMessage('Check-out date is required')
+      .isISO8601().withMessage('Invalid check-out date'),
+    body('guests.adults')
+      .optional()
+      .isInt({ min: 1 }).withMessage('At least 1 adult required')
+  ]
+};
+
 module.exports = {
   authValidation,
-  propertyValidation
+  propertyValidation,
+  bookingValidation
   // More validations will be added here as we build each phase:
   // bookingValidation  → Phase 3
   // reviewValidation   → Phase 5
