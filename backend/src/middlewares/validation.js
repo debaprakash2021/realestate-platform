@@ -1,5 +1,6 @@
 const { body } = require('express-validator');
 
+// ─── Auth Validation ─────────────────────────────────────────────
 const authValidation = {
   register: [
     body('name')
@@ -13,7 +14,10 @@ const authValidation = {
       .normalizeEmail(),
     body('password')
       .notEmpty().withMessage('Password is required')
-      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('role')
+      .optional()
+      .isIn(['guest', 'host']).withMessage('Role must be guest or host')
   ],
   login: [
     body('email')
@@ -25,14 +29,18 @@ const authValidation = {
   ],
   updateProfile: [
     body('name')
-      .optional()
-      .trim()
+      .optional().trim()
       .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters'),
     body('email')
-      .optional()
-      .trim()
+      .optional().trim()
       .isEmail().withMessage('Please provide a valid email')
-      .normalizeEmail()
+      .normalizeEmail(),
+    body('phone')
+      .optional().trim()
+      .isMobilePhone().withMessage('Please provide a valid phone number'),
+    body('bio')
+      .optional().trim()
+      .isLength({ max: 500 }).withMessage('Bio cannot exceed 500 characters')
   ],
   changePassword: [
     body('currentPassword')
@@ -43,89 +51,74 @@ const authValidation = {
   ]
 };
 
-const projectValidation = {
+// ─── Property Validation ─────────────────────────────────────────
+const propertyValidation = {
   create: [
-    body('name')
+    body('title')
       .trim()
-      .notEmpty().withMessage('Project name is required')
-      .isLength({ min: 3, max: 100 }).withMessage('Project name must be between 3 and 100 characters'),
+      .notEmpty().withMessage('Title is required')
+      .isLength({ min: 10, max: 100 }).withMessage('Title must be between 10 and 100 characters'),
     body('description')
       .trim()
       .notEmpty().withMessage('Description is required')
-      .isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters'),
-    body('priority')
-      .optional()
-      .isIn(['low', 'medium', 'high']).withMessage('Priority must be low, medium, or high'),
-    body('endDate')
-      .optional()
-      .isISO8601().withMessage('Invalid date format')
-  ],
-  update: [
-    body('name')
-      .optional()
-      .trim()
-      .isLength({ min: 3, max: 100 }).withMessage('Project name must be between 3 and 100 characters'),
-    body('description')
-      .optional()
-      .trim()
-      .isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters'),
-    body('status')
-      .optional()
-      .isIn(['active', 'completed', 'on-hold', 'cancelled']).withMessage('Invalid status'),
-    body('priority')
-      .optional()
-      .isIn(['low', 'medium', 'high']).withMessage('Priority must be low, medium, or high')
-  ]
-};
-
-const taskValidation = {
-  create: [
-    body('title')
-      .trim()
-      .notEmpty().withMessage('Task title is required')
-      .isLength({ min: 3, max: 200 }).withMessage('Title must be between 3 and 200 characters'),
-    body('description')
-      .optional()
-      .trim()
-      .isLength({ max: 1000 }).withMessage('Description cannot exceed 1000 characters'),
-    body('project')
-      .notEmpty().withMessage('Project ID is required')
-      .isMongoId().withMessage('Invalid project ID'),
-    body('priority')
-      .optional()
-      .isIn(['low', 'medium', 'high']).withMessage('Priority must be low, medium, or high'),
-    body('dueDate')
-      .optional()
-      .isISO8601().withMessage('Invalid date format')
+      .isLength({ min: 50, max: 2000 }).withMessage('Description must be between 50 and 2000 characters'),
+    body('propertyType')
+      .notEmpty().withMessage('Property type is required')
+      .isIn(['apartment', 'house', 'villa', 'condo', 'studio', 'cabin', 'cottage', 'farmhouse', 'loft', 'other'])
+      .withMessage('Invalid property type'),
+    body('roomType')
+      .notEmpty().withMessage('Room type is required')
+      .isIn(['entire_place', 'private_room', 'shared_room'])
+      .withMessage('Invalid room type'),
+    body('location.address')
+      .notEmpty().withMessage('Address is required'),
+    body('location.city')
+      .notEmpty().withMessage('City is required'),
+    body('location.country')
+      .notEmpty().withMessage('Country is required'),
+    body('location.coordinates.coordinates')
+      .isArray({ min: 2, max: 2 }).withMessage('Coordinates must be [longitude, latitude]'),
+    body('pricing.basePrice')
+      .notEmpty().withMessage('Base price is required')
+      .isNumeric().withMessage('Price must be a number')
+      .isFloat({ min: 1 }).withMessage('Price must be at least 1'),
+    body('details.bedrooms')
+      .notEmpty().withMessage('Number of bedrooms is required')
+      .isInt({ min: 0 }).withMessage('Bedrooms must be 0 or more'),
+    body('details.bathrooms')
+      .notEmpty().withMessage('Number of bathrooms is required')
+      .isFloat({ min: 0 }).withMessage('Bathrooms must be 0 or more'),
+    body('details.beds')
+      .notEmpty().withMessage('Number of beds is required')
+      .isInt({ min: 1 }).withMessage('Must have at least 1 bed'),
+    body('details.maxGuests')
+      .notEmpty().withMessage('Max guests is required')
+      .isInt({ min: 1 }).withMessage('Must allow at least 1 guest'),
   ],
   update: [
     body('title')
-      .optional()
-      .trim()
-      .isLength({ min: 3, max: 200 }).withMessage('Title must be between 3 and 200 characters'),
+      .optional().trim()
+      .isLength({ min: 10, max: 100 }).withMessage('Title must be between 10 and 100 characters'),
     body('description')
+      .optional().trim()
+      .isLength({ min: 50, max: 2000 }).withMessage('Description must be between 50 and 2000 characters'),
+    body('pricing.basePrice')
       .optional()
-      .trim()
-      .isLength({ max: 1000 }).withMessage('Description cannot exceed 1000 characters'),
+      .isFloat({ min: 1 }).withMessage('Price must be at least 1'),
     body('status')
       .optional()
-      .isIn(['todo', 'in-progress', 'done']).withMessage('Invalid status'),
-    body('priority')
+      .isIn(['active', 'inactive']).withMessage('Status must be active or inactive'),
+    body('cancellationPolicy')
       .optional()
-      .isIn(['low', 'medium', 'high']).withMessage('Priority must be low, medium, or high'),
-    body('assignedTo')
-      .optional()
-      .isMongoId().withMessage('Invalid user ID')
-  ],
-  updateStatus: [
-    body('status')
-      .notEmpty().withMessage('Status is required')
-      .isIn(['todo', 'in-progress', 'done']).withMessage('Invalid status')
+      .isIn(['flexible', 'moderate', 'strict']).withMessage('Invalid cancellation policy')
   ]
 };
 
 module.exports = {
   authValidation,
-  projectValidation,
-  taskValidation
+  propertyValidation
+  // More validations will be added here as we build each phase:
+  // bookingValidation  → Phase 3
+  // reviewValidation   → Phase 5
+  // messageValidation  → Phase 6
 };
