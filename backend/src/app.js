@@ -14,6 +14,7 @@ const authRoutes     = require('./routes/authRoutes');
 const propertyRoutes = require('./routes/Propertyroutes');
 const bookingRoutes  = require('./routes/bookingRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 // Create logs directory if it doesn't exist
 if (!fs.existsSync('logs')) {
@@ -66,7 +67,8 @@ app.get('/health', (req, res) => {
 app.use('/api/auth',       authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/bookings',   bookingRoutes);
-app.use('/api/upload',     uploadRoutes);   
+app.use('/api/upload',     uploadRoutes);
+app.use('/api/reviews',    reviewRoutes);   
 // More routes will be added here as we build each phase:
 // app.use('/api/bookings',        bookingRoutes);      // Phase 3
 // app.use('/api/reviews',         reviewRoutes);       // Phase 5
