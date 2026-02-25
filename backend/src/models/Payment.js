@@ -2,70 +2,54 @@ const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema({
 
-  // ─── References ───────────────────────────────────────────────
-  booking: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking',
-    required: true
-  },
-  guest: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  host: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
+  booking: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true },
+  guest:   { type: mongoose.Schema.Types.ObjectId, ref: 'User',    required: true },
+  host:    { type: mongoose.Schema.Types.ObjectId, ref: 'User',    required: true },
 
-  // ─── Amount Details ───────────────────────────────────────────
   amount: {
-    total:          { type: Number, required: true },
-    hostPayout:     { type: Number, required: true },  // 97% of total
-    platformFee:    { type: Number, required: true },  // 3% platform cut
-    currency:       { type: String, default: 'INR' }
+    total:       { type: Number, required: true },
+    hostPayout:  { type: Number, required: true },  // 97% of total
+    platformFee: { type: Number, required: true },  // 3% platform cut
+    surcharge:   { type: Number, default: 0 },      // +300 for pay_on_arrival
+    currency:    { type: String, default: 'INR' }
   },
 
-  // ─── Payment Status ───────────────────────────────────────────
   status: {
     type: String,
-    enum: ['pending', 'held', 'released', 'refunded', 'failed'],
+    enum: ['pending', 'held', 'released', 'refunded', 'failed', 'pay_on_arrival'],
     default: 'pending'
   },
 
-  // ─── Payment Method ───────────────────────────────────────────
   method: {
     type: String,
-    enum: ['card', 'upi', 'netbanking', 'wallet'],
+    enum: ['card', 'upi', 'netbanking', 'pay_on_arrival'],
     default: 'card'
+  },
+
+  // ─── Razorpay Fields ──────────────────────────────────────────
+  razorpay: {
+    orderId:    String,   // from Razorpay order creation
+    paymentId:  String,   // from Razorpay after success
+    signature:  String    // for verification
   },
 
   // ─── Escrow Logic ─────────────────────────────────────────────
   escrow: {
-    heldAt:      Date,   // when funds were held
-    releaseAt:   Date,   // scheduled release (after check-in)
-    releasedAt:  Date,   // actual release
-    releasedBy:  { type: String, enum: ['system', 'admin'] }
+    heldAt:     Date,
+    releaseAt:  Date,
+    releasedAt: Date,
+    releasedBy: { type: String, enum: ['system', 'admin'] }
   },
 
-  // ─── Refund Details ───────────────────────────────────────────
   refund: {
     amount:     Number,
     reason:     String,
     refundedAt: Date
   },
 
-  // ─── Transaction ID (simulated) ───────────────────────────────
-  transactionId: {
-    type: String,
-    unique: true,
-    sparse: true
-  }
+  transactionId: { type: String, unique: true, sparse: true }
 
-}, {
-  timestamps: true
-});
+}, { timestamps: true });
 
 paymentSchema.index({ booking: 1 });
 paymentSchema.index({ guest: 1 });
