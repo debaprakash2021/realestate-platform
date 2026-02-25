@@ -2,6 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { Home, Heart, Calendar, MessageCircle, User, LogOut, PlusSquare, BarChart2, Menu, X, Building } from 'lucide-react'
 import { useState } from 'react'
+import NotificationsPanel from '../common/NotificationsPanel'
 
 export default function Navbar() {
   const { user, logout }        = useAuth()
@@ -10,7 +11,10 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/'); setMenuOpen(false) }
-  const isActive = (path) => location.pathname === path ? 'text-rose-500 bg-rose-50' : 'text-gray-600 hover:text-rose-500 hover:bg-rose-50'
+  const isActive = (path) =>
+    location.pathname === path
+      ? 'text-rose-500 bg-rose-50'
+      : 'text-gray-600 hover:text-rose-500 hover:bg-rose-50'
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -22,7 +26,7 @@ export default function Navbar() {
             <div className="w-8 h-8 bg-rose-500 rounded-lg flex items-center justify-center">
               <Home size={18} className="text-white" />
             </div>
-            <span className="font-bold text-xl text-gray-900">RealEstate</span>
+            <span className="font-bold text-xl text-gray-900">StayEase</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -50,13 +54,16 @@ export default function Navbar() {
                       <BarChart2 size={16} /> Dashboard
                     </Link>
                     <Link to="/host/properties" className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${isActive('/host/properties')}`}>
-                      <Building size={16} /> My Properties
+                      <Building size={16} /> Properties
                     </Link>
                     <Link to="/host/properties/new" className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${isActive('/host/properties/new')}`}>
                       <PlusSquare size={16} /> List
                     </Link>
                   </>
                 )}
+
+                {/* 🔔 Notifications Bell */}
+                <NotificationsPanel />
 
                 <Link to="/profile" className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${isActive('/profile')}`}>
                   <User size={16} /> {user.name?.split(' ')[0]}

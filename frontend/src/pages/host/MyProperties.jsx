@@ -28,7 +28,9 @@ export default function MyProperties() {
 
   if (loading) return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <div className="animate-pulse space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card h-36" />)}</div>
+      <div className="animate-pulse space-y-4">
+        {[...Array(3)].map((_, i) => <div key={i} className="card h-36" />)}
+      </div>
     </div>
   )
 
@@ -70,17 +72,25 @@ export default function MyProperties() {
                     <div className="flex flex-wrap gap-3 text-sm text-gray-500">
                       <span>{p.details?.bedrooms} bed · {p.details?.bathrooms} bath · {p.details?.maxGuests} guests</span>
                       {p.ratings?.average > 0 && (
-                        <span className="flex items-center gap-1"><Star size={13} className="fill-gray-700 text-gray-700" /> {p.ratings.average} ({p.ratings.count})</span>
+                        <span className="flex items-center gap-1">
+                          <Star size={13} className="fill-gray-700 text-gray-700" /> {p.ratings.average} ({p.ratings.count})
+                        </span>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-4">
-                    <span className="font-semibold text-gray-900">₹{p.pricing?.basePrice?.toLocaleString()}<span className="text-gray-400 font-normal text-sm">/night</span></span>
+                    <span className="font-semibold text-gray-900">
+                      ₹{p.pricing?.basePrice?.toLocaleString()}<span className="text-gray-400 font-normal text-sm">/night</span>
+                    </span>
                     <div className="flex items-center gap-2">
-                      <Link to={`/property/${p._id}`} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                      <Link to={`/property/${p._id}`} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                         <Eye size={17} />
                       </Link>
-                      <button onClick={() => handleDelete(p._id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                      {/* ✅ NEW: Edit button */}
+                      <Link to={`/host/properties/${p._id}/edit`} className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Edit">
+                        <Edit size={17} />
+                      </Link>
+                      <button onClick={() => handleDelete(p._id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                         <Trash2 size={17} />
                       </button>
                     </div>

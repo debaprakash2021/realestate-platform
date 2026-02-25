@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
+import ReviewForm from '../../components/common/ReviewForm'
 
 const STATUS_STYLES = {
   pending:   { cls: 'bg-yellow-100 text-yellow-700',  icon: <Clock size={14} /> },
@@ -13,12 +14,13 @@ const STATUS_STYLES = {
 }
 
 export default function MyBookings() {
-  const [bookings, setBookings] = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [bookings, setBookings]       = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [reviewBooking, setReviewBooking] = useState(null) // booking to review
 
   useEffect(() => {
     api.get('/bookings/my-bookings')
-      .then(r => setBookings(r.data.data || []))
+      .then(r => setBookings(r.data.data?.bookings || r.data.data || []))
       .catch(() => toast.error('Failed to load bookings'))
       .finally(() => setLoading(false))
   }, [])
@@ -34,7 +36,18 @@ export default function MyBookings() {
     }
   }
 
-  if (loading) return <div className="max-w-4xl mx-auto px-4 py-10"><div className="animate-pulse space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="card h-32" />)}</div></div>
+  const handleReviewSubmitted = (bookingId) => {
+    // Mark as reviewed in UI immediately
+    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, hasReview: true } : b))
+  }
+
+  if (loading) return (
+    <div className="max-w-4xl mx-auto px-4 py-10">
+      <div className="animate-pulse space-y-4">
+        {[...Array(3)].map((_, i) => <div key={i} className="card h-36" />)}
+      </div>
+    </div>
+  )
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -54,8 +67,12 @@ export default function MyBookings() {
             const image  = b.property?.images?.[0]?.url || b.property?.primaryImage || 'https://placehold.co/200x150?text=No+Image'
             return (
               <div key={b._id} className="card flex flex-col sm:flex-row overflow-hidden">
-                <img src={image} alt={b.property?.title} className="w-full sm:w-40 h-40 sm:h-auto object-cover"
-                  onError={e => e.target.src = 'https://placehold.co/200x150?text=No+Image'} />
+                <img
+                  src={image}
+                  alt={b.property?.title}
+                  className="w-full sm:w-40 h-40 sm:h-auto object-cover"
+                  onError={e => e.target.src = 'https://placehold.co/200x150?text=No+Image'}
+                />
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -77,22 +94,42 @@ export default function MyBookings() {
                   </div>
                   <div className="flex items-center justify-between mt-4">
                     <span className="font-semibold text-gray-900">₹{b.pricing?.totalAmount?.toLocaleString()}</span>
-                    {b.status === 'confirmed' && (
-                      <button onClick={() => handleCancel(b._id)} className="text-sm text-red-500 hover:text-red-700 font-medium">
-                        Cancel
-                      </button>
-                    )}
-                    {b.status === 'completed' && !b.hasReview && (
-                      <Link to={`/property/${b.property?._id}`} className="text-sm text-rose-500 font-medium hover:underline">
-                        Leave a review →
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {(b.status === 'pending' || b.status === 'confirmed') && (
+                        <button onClick={() => handleCancel(b._id)} className="text-sm text-red-500 hover:text-red-700 font-medium">
+                          Cancel
+                        </button>
+                      )}
+                      {/* ✅ NEW: Inline review modal instead of redirect */}
+                      {b.status === 'completed' && !b.hasReview && (
+                        <button
+                          onClick={() => setReviewBooking(b)}
+                          className="flex items-center gap-1.5 text-sm text-rose-500 font-medium hover:text-rose-700 transition-colors"
+                        >
+                          <Star size={14} /> Leave Review
+                        </button>
+                      )}
+                      {b.status === 'completed' && b.hasReview && (
+                        <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
+                          <CheckCircle size={14} /> Reviewed
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             )
           })}
         </div>
+      )}
+
+      {/* Inline Review Modal */}
+      {reviewBooking && (
+        <ReviewForm
+          booking={reviewBooking}
+          onClose={() => setReviewBooking(null)}
+          onSubmitted={() => handleReviewSubmitted(reviewBooking._id)}
+        />
       )}
     </div>
   )

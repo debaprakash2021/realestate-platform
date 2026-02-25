@@ -12,6 +12,7 @@ import Profile        from './pages/guest/Profile'
 import HostDashboard  from './pages/host/HostDashboard'
 import MyProperties   from './pages/host/MyProperties'
 import CreateProperty from './pages/host/CreateProperty'
+import EditProperty   from './pages/host/EditProperty'   // ✅ NEW
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth()
@@ -39,9 +40,11 @@ export default function App() {
         <Route path="/profile"     element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
         {/* Host */}
-        <Route path="/host/dashboard"      element={<ProtectedRoute roles={['host','admin']}><HostDashboard /></ProtectedRoute>} />
-        <Route path="/host/properties"     element={<ProtectedRoute roles={['host','admin']}><MyProperties /></ProtectedRoute>} />
-        <Route path="/host/properties/new" element={<ProtectedRoute roles={['host','admin']}><CreateProperty /></ProtectedRoute>} />
+        <Route path="/host/dashboard"            element={<ProtectedRoute roles={['host','admin']}><HostDashboard /></ProtectedRoute>} />
+        <Route path="/host/properties"           element={<ProtectedRoute roles={['host','admin']}><MyProperties /></ProtectedRoute>} />
+        <Route path="/host/properties/new"       element={<ProtectedRoute roles={['host','admin']}><CreateProperty /></ProtectedRoute>} />
+        {/* ✅ NEW: Edit property route */}
+        <Route path="/host/properties/:id/edit"  element={<ProtectedRoute roles={['host','admin']}><EditProperty /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
