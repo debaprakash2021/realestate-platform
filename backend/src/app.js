@@ -10,16 +10,17 @@ const errorHandler = require('./middlewares/errorHandler');
 const logger = require('./utils/logger');
 
 // Route imports
-const authRoutes     = require('./routes/authRoutes');
-const propertyRoutes = require('./routes/propertyRoutes');
-const bookingRoutes  = require('./routes/bookingRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');
-const reviewRoutes = require('./routes/reviewRoutes');
-const messageRoutes = require('./routes/messageRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-const favoriteRoutes = require('./routes/favoriteRoutes');
+const authRoutes         = require('./routes/authRoutes');
+const propertyRoutes     = require('./routes/Propertyroutes');
+const bookingRoutes      = require('./routes/bookingRoutes');
+const uploadRoutes       = require('./routes/uploadRoutes');
+const reviewRoutes       = require('./routes/reviewRoutes');
+const messageRoutes      = require('./routes/messageRoutes');
+const paymentRoutes      = require('./routes/paymentRoutes');
+const favoriteRoutes     = require('./routes/favoriteRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
+const analyticsRoutes    = require('./routes/analyticsRoutes');
+const adminRoutes        = require('./routes/adminRoutes');
 
 // Create logs directory if it doesn't exist
 if (!fs.existsSync('logs')) {
@@ -69,24 +70,17 @@ app.get('/health', (req, res) => {
 });
 
 // ─── API Routes ─────────────────────────────────────────────────
-app.use('/api/auth',       authRoutes);
-app.use('/api/properties', propertyRoutes);
-app.use('/api/bookings',   bookingRoutes);
-app.use('/api/upload',     uploadRoutes);
-app.use('/api/reviews',    reviewRoutes);   
-app.use('/api/messages', messageRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/favorites', favoriteRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/properties',    propertyRoutes);
+app.use('/api/bookings',      bookingRoutes);
+app.use('/api/upload',        uploadRoutes);
+app.use('/api/reviews',       reviewRoutes);
+app.use('/api/messages',      messageRoutes);
+app.use('/api/payments',      paymentRoutes);
+app.use('/api/favorites',     favoriteRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/analytics', analyticsRoutes);
-// More routes will be added here as we build each phase:
-// app.use('/api/bookings',        bookingRoutes);      // Phase 3
-// app.use('/api/reviews',         reviewRoutes);       // Phase 5
-// app.use('/api/messages',        messageRoutes);      // Phase 6
-// app.use('/api/payments',        paymentRoutes);      // Phase 7
-// app.use('/api/favorites',       favoriteRoutes);     // Phase 8
-// app.use('/api/notifications',   notificationRoutes); // Phase 9
-// app.use('/api/analytics',       analyticsRoutes);    // Phase 10
+app.use('/api/analytics',     analyticsRoutes);
+app.use('/api/admin',         adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
