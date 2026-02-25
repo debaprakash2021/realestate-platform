@@ -1,3 +1,7 @@
+// This file REPLACES Propertyservice.js (capital P)
+// On Linux, require('../services/propertyService') will fail if file is named Propertyservice.js
+// Rename the file from Propertyservice.js → propertyService.js
+
 const Property = require('../models/Property');
 
 class PropertyService {
@@ -22,27 +26,21 @@ class PropertyService {
 
     const filter = { status: 'active' };
 
-    // Location filters
-    if (city)        filter['location.city']    = { $regex: city, $options: 'i' };
-    if (country)     filter['location.country'] = { $regex: country, $options: 'i' };
+    if (city)         filter['location.city']    = { $regex: city, $options: 'i' };
+    if (country)      filter['location.country'] = { $regex: country, $options: 'i' };
+    if (propertyType) filter.propertyType        = propertyType;
+    if (roomType)     filter.roomType            = roomType;
 
-    // Type filters
-    if (propertyType) filter.propertyType = propertyType;
-    if (roomType)     filter.roomType     = roomType;
-
-    // Price range
     if (minPrice || maxPrice) {
       filter['pricing.basePrice'] = {};
       if (minPrice) filter['pricing.basePrice'].$gte = Number(minPrice);
       if (maxPrice) filter['pricing.basePrice'].$lte = Number(maxPrice);
     }
 
-    // Guests & rooms
     if (bedrooms)  filter['details.bedrooms']  = { $gte: Number(bedrooms) };
     if (bathrooms) filter['details.bathrooms'] = { $gte: Number(bathrooms) };
     if (maxGuests) filter['details.maxGuests'] = { $gte: Number(maxGuests) };
 
-    // Amenities filter (e.g. amenities=wifi,pool,kitchen)
     if (amenities) {
       const amenityList = amenities.split(',');
       amenityList.forEach(amenity => {
@@ -50,7 +48,6 @@ class PropertyService {
       });
     }
 
-    // Availability filter
     if (checkIn && checkOut) {
       filter.blockedDates = {
         $not: {
@@ -67,11 +64,10 @@ class PropertyService {
 
     const [properties, total] = await Promise.all([
       Property.find(filter)
-        .populate('host', 'name avatar')
+        .populate('host', 'name avatar hostInfo.isVerified')
         .sort({ [sortBy]: sortOrder })
         .skip(skip)
-        .limit(Number(limit))
-        .lean(),
+        .limit(Number(limit)),
       Property.countDocuments(filter)
     ]);
 
@@ -79,82 +75,69 @@ class PropertyService {
       properties,
       pagination: {
         total,
-        page: Number(page),
+        page:  Number(page),
         limit: Number(limit),
         pages: Math.ceil(total / Number(limit))
       }
     };
   }
 
-  // ─── Get Single Property ────────────────────────────────────────
-  static async getPropertyById(id) {
-    const property = await Property.findById(id)
-      .populate('host', 'name avatar email createdAt');
-
+  // ─── Get Property By ID ──────────────────────────────────────────
+  static async getPropertyById(propertyId) {
+    const property = await Property.findById(propertyId)
+      .populate('host', 'name avatar phone hostInfo');
     if (!property) throw new Error('Property not found');
-
-    // Increment view count
-    await Property.findByIdAndUpdate(id, { $inc: { 'stats.viewCount': 1 } });
-
     return property;
   }
 
-  // ─── Update Property ────────────────────────────────────────────
-  static async updateProperty(id, hostId, data) {
-    const property = await Property.findOne({ _id: id, host: hostId });
+  // ─── Update Property ─────────────────────────────────────────────
+  static async updateProperty(propertyId, hostId, data) {
+    const property = await Property.findOne({ _id: propertyId, host: hostId });
     if (!property) throw new Error('Property not found or unauthorized');
-
-    const updated = await Property.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true
-    });
-    return updated;
+    Object.assign(property, data);
+    await property.save();
+    return property;
   }
 
-  // ─── Delete Property ────────────────────────────────────────────
-  static async deleteProperty(id, hostId) {
-    const property = await Property.findOne({ _id: id, host: hostId });
+  // ─── Delete Property ─────────────────────────────────────────────
+  static async deleteProperty(propertyId, hostId) {
+    const property = await Property.findOne({ _id: propertyId, host: hostId });
     if (!property) throw new Error('Property not found or unauthorized');
-
-    await Property.findByIdAndDelete(id);
+    await property.deleteOne();
     return { message: 'Property deleted successfully' };
   }
 
-  // ─── Geospatial Search ──────────────────────────────────────────
-  static async findNearby(longitude, latitude, radius = 10000) {
-    const properties = await Property.findNearby(
-      parseFloat(longitude),
-      parseFloat(latitude),
-      parseInt(radius)
-    ).populate('host', 'name avatar').lean();
-
+  // ─── Get My Properties (host) ─────────────────────────────────────
+  static async getMyProperties(hostId) {
+    const properties = await Property.find({ host: hostId }).sort({ createdAt: -1 });
     return properties;
   }
 
-  // ─── Get Host Properties ────────────────────────────────────────
-  static async getHostProperties(hostId) {
-    const properties = await Property.find({ host: hostId })
-      .sort({ createdAt: -1 });
+  // ─── Get Nearby Properties ────────────────────────────────────────
+  static async getNearbyProperties(lng, lat, maxDistance = 50000) {
+    const properties = await Property.find({
+      status: 'active',
+      'location.coordinates': {
+        $near: {
+          $geometry:    { type: 'Point', coordinates: [Number(lng), Number(lat)] },
+          $maxDistance: Number(maxDistance)
+        }
+      }
+    }).limit(20);
     return properties;
   }
 
-  // ─── Check Availability ─────────────────────────────────────────
-  static async checkAvailability(id, checkIn, checkOut) {
-    const property = await Property.findById(id);
+  // ─── Check Availability ───────────────────────────────────────────
+  static async checkAvailability(propertyId, checkIn, checkOut) {
+    const property = await Property.findById(propertyId);
     if (!property) throw new Error('Property not found');
 
-    const available = property.isAvailable(checkIn, checkOut);
-    return { available, propertyId: id, checkIn, checkOut };
-  }
+    const isBlocked = property.blockedDates.some(d =>
+      new Date(checkIn) < new Date(d.endDate) &&
+      new Date(checkOut) > new Date(d.startDate)
+    );
 
-  // ─── Toggle Featured ────────────────────────────────────────────
-  static async toggleFeatured(id) {
-    const property = await Property.findById(id);
-    if (!property) throw new Error('Property not found');
-
-    property.isFeatured = !property.isFeatured;
-    await property.save();
-    return property;
+    return { available: !isBlocked, propertyId };
   }
 }
 

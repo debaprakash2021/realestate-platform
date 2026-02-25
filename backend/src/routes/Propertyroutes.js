@@ -1,5 +1,5 @@
 const express = require('express');
-const PropertyController = require('../controllers/Propertycontroller');
+const PropertyController = require('../controllers/propertyController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
