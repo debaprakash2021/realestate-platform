@@ -1,5 +1,9 @@
-const PropertyService = require('../services/propertyService');
-const ResponseHandler = require('../utils/responseHandler');
+// propertyController.js (lowercase — replaces Propertycontroller.js)
+// On Linux/production, require('../controllers/propertyController') is case-sensitive.
+// Delete the old Propertycontroller.js after placing this file.
+
+const PropertyService  = require('../services/propertyService');
+const ResponseHandler  = require('../utils/responseHandler');
 const { validationResult } = require('express-validator');
 
 class PropertyController {
@@ -72,7 +76,7 @@ class PropertyController {
     }
   }
 
-  // GET /api/properties/my-properties
+  // GET /api/properties/host/my-properties
   static async getMyProperties(req, res) {
     try {
       const properties = await PropertyService.getMyProperties(req.user.id);
