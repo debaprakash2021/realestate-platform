@@ -18,6 +18,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Create logs directory if it doesn't exist
 if (!fs.existsSync('logs')) {
@@ -75,6 +76,7 @@ app.use('/api/reviews',    reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/notifications', notificationRoutes);
 // More routes will be added here as we build each phase:
 // app.use('/api/bookings',        bookingRoutes);      // Phase 3
 // app.use('/api/reviews',         reviewRoutes);       // Phase 5
