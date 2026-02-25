@@ -8,12 +8,24 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser]       = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const stored = localStorage.getItem('user')
-    const token  = localStorage.getItem('token')
-    if (stored && token) setUser(JSON.parse(stored))
-    setLoading(false)
-  }, [])
+  // ✅ New — verifies token + fetches fresh user from DB on every app load
+useEffect(() => {
+  const token = localStorage.getItem('token')
+  if (!token) { setLoading(false); return }
+
+  api.get('/auth/me')
+    .then(res => {
+      const freshUser = res.data.data
+      localStorage.setItem('user', JSON.stringify(freshUser))
+      setUser(freshUser)
+    })
+    .catch(() => {
+      // Token expired or invalid → force logout
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    })
+    .finally(() => setLoading(false))
+}, [])
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password })

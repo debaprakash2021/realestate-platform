@@ -75,7 +75,7 @@ class PropertyController {
   // GET /api/properties/my-properties
   static async getMyProperties(req, res) {
     try {
-      const properties = await PropertyService.getHostProperties(req.user.id);
+      const properties = await PropertyService.getMyProperties(req.user.id);
       return ResponseHandler.success(res, properties);
     } catch (error) {
       return ResponseHandler.error(res, error.message, 500);
