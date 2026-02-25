@@ -36,14 +36,14 @@ export default function PropertyDetail() {
     if (!user) { toast.error('Please login to book'); navigate('/login'); return }
     setBookingLoading(true)
     try {
-      await api.post('/bookings', {
+      const res = await api.post('/bookings', {
         propertyId: id,
         checkIn: booking.checkIn,
         checkOut: booking.checkOut,
         guests: { adults: booking.adults, children: booking.children, infants: 0 }
       })
-      toast.success('Booking created! 🎉')
-      navigate('/my-bookings')
+      toast.success('Booking created! Redirecting to payment... 🎉')
+      navigate(`/payment/${res.data.data._id}`)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Booking failed')
     } finally { setBookingLoading(false) }
