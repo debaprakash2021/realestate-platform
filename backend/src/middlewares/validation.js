@@ -14,7 +14,11 @@ const authValidation = {
       .normalizeEmail(),
     body('password')
       .notEmpty().withMessage('Password is required')
-      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+      .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+      .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
+      .matches(/[0-9]/).withMessage('Password must contain at least one number')
+      .matches(/[@$!%*?&#^()_\-+=]/).withMessage('Password must contain at least one special character (@$!%*?&#)'),
     body('role')
       .optional()
       .isIn(['guest', 'host']).withMessage('Role must be guest or host')
@@ -47,7 +51,11 @@ const authValidation = {
       .notEmpty().withMessage('Current password is required'),
     body('newPassword')
       .notEmpty().withMessage('New password is required')
-      .isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+      .isLength({ min: 8 }).withMessage('New password must be at least 8 characters')
+      .matches(/[A-Z]/).withMessage('New password must contain at least one uppercase letter')
+      .matches(/[a-z]/).withMessage('New password must contain at least one lowercase letter')
+      .matches(/[0-9]/).withMessage('New password must contain at least one number')
+      .matches(/[@$!%*?&#^()_\-+=]/).withMessage('New password must contain at least one special character (@$!%*?&#)')
   ]
 };
 
@@ -138,8 +146,4 @@ module.exports = {
   authValidation,
   propertyValidation,
   bookingValidation
-  // More validations will be added here as we build each phase:
-  // bookingValidation  → Phase 3
-  // reviewValidation   → Phase 5
-  // messageValidation  → Phase 6
 };
