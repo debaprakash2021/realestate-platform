@@ -5,13 +5,15 @@ const { authValidation } = require('../middlewares/validation');
 
 const router = express.Router();
 
-// Public routes
-router.post('/register', authValidation.register, AuthController.register);
-router.post('/login', authValidation.login, AuthController.login);
+// ─── Public ───────────────────────────────────────────────────────
+router.post('/register',    authValidation.register,       AuthController.register);
+router.post('/verify-otp',                                 AuthController.verifyOtp);
+router.post('/resend-otp',                                 AuthController.resendOtp);
+router.post('/login',       authValidation.login,          AuthController.login);
 
-// Protected routes
-router.get('/me', authMiddleware, AuthController.getMe);
-router.put('/update-profile', authMiddleware, authValidation.updateProfile, AuthController.updateProfile);
-router.put('/change-password', authMiddleware, authValidation.changePassword, AuthController.changePassword);
+// ─── Protected ────────────────────────────────────────────────────
+router.get('/me',                    authMiddleware, AuthController.getMe);
+router.put('/update-profile',        authMiddleware, authValidation.updateProfile, AuthController.updateProfile);
+router.put('/change-password',       authMiddleware, authValidation.changePassword, AuthController.changePassword);
 
 module.exports = router;

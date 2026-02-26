@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,        // this already creates an index, no need for userSchema.index({ email: 1 })
+    unique: true,
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
@@ -22,63 +22,56 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false        // never return password in queries
+    minlength: [8, 'Password must be at least 8 characters'],
+    select: false
   },
 
   // ─── Role ─────────────────────────────────────────────────────
   role: {
     type: String,
     enum: ['guest', 'host', 'admin'],
-    default: 'guest'    // guest = person looking to book, host = property owner
+    default: 'guest'
   },
 
   // ─── Profile ──────────────────────────────────────────────────
   avatar: {
-    url: {
-      type: String,
-      default: 'https://via.placeholder.com/150'
-    },
-    publicId: String    // Cloudinary public ID for deletion
+    url:      { type: String, default: 'https://via.placeholder.com/150' },
+    publicId: String
   },
-  phone: {
-    type: String,
-    trim: true
-  },
-  bio: {
-    type: String,
-    maxlength: [500, 'Bio cannot exceed 500 characters']
-  },
+  phone: { type: String, trim: true },
+  bio:   { type: String, maxlength: [500, 'Bio cannot exceed 500 characters'] },
   location: {
-    city: String,
+    city:    String,
     country: String
   },
 
-  // ─── Host Info (only relevant if role = host) ─────────────────
+  // ─── Host Info ────────────────────────────────────────────────
   hostInfo: {
-    isVerified:        { type: Boolean, default: false },
-    responseRate:      { type: Number, default: 0 },   // percentage 0-100
-    responseTime:      { type: String, default: 'within a day' },
-    totalListings:     { type: Number, default: 0 },
-    totalEarnings:     { type: Number, default: 0 },
-    joinedAsHostDate:  { type: Date }
+    isVerified:       { type: Boolean, default: false },
+    responseRate:     { type: Number,  default: 0 },
+    responseTime:     { type: String,  default: 'within a day' },
+    totalListings:    { type: Number,  default: 0 },
+    totalEarnings:    { type: Number,  default: 0 },
+    joinedAsHostDate: { type: Date }
   },
 
   // ─── Account Status ───────────────────────────────────────────
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  isEmailVerified: {
-    type: Boolean,
-    default: false
+  isActive:        { type: Boolean, default: true },
+  isEmailVerified: { type: Boolean, default: false },
+
+  // ─── Email OTP Verification ───────────────────────────────────
+  emailOtp: {
+    code:      { type: String,   select: false },  // stored as bcrypt hash
+    expiresAt: { type: Date,     select: false },
+    attempts:  { type: Number,   default: 0, select: false },
+    lastSentAt:{ type: Date,     select: false }   // for resend cooldown
   },
 
   // ─── Stats ────────────────────────────────────────────────────
   stats: {
-    totalBookings:   { type: Number, default: 0 },
-    totalSpent:      { type: Number, default: 0 },
-    totalReviews:    { type: Number, default: 0 }
+    totalBookings: { type: Number, default: 0 },
+    totalSpent:    { type: Number, default: 0 },
+    totalReviews:  { type: Number, default: 0 }
   }
 
 }, {
@@ -87,8 +80,7 @@ const userSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// ─── Indexes ─────────────────────────────────────────────────────
-// NOTE: Do NOT add userSchema.index({ email: 1 }) — unique:true above already does it
+// ─── Indexes ──────────────────────────────────────────────────────
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 
@@ -108,17 +100,17 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// ─── Virtual: User's Properties (if host) ────────────────────────
+// ─── Virtual: User's Properties ───────────────────────────────────
 userSchema.virtual('properties', {
-  ref:        'Property',
-  localField: '_id',
+  ref:          'Property',
+  localField:   '_id',
   foreignField: 'host'
 });
 
-// ─── Virtual: User's Bookings (if guest) ─────────────────────────
+// ─── Virtual: User's Bookings ─────────────────────────────────────
 userSchema.virtual('bookings', {
-  ref:        'Booking',
-  localField: '_id',
+  ref:          'Booking',
+  localField:   '_id',
   foreignField: 'guest'
 });
 
