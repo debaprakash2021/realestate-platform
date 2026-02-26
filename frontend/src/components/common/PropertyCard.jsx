@@ -5,9 +5,16 @@ import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
-export default function PropertyCard({ property }) {
+// FIX #7: Accept `isFavorited` prop so the parent (Home, Favorites, etc.) can pass
+// the real initial state. Without this, the heart icon always renders as "not liked"
+// even for properties the user has already favorited — it resets on every page load
+// or login/logout because `liked` state always starts as `false`.
+//
+// Usage: <PropertyCard property={p} isFavorited={favoritedIds.has(p._id)} />
+// Falls back to false if prop not provided (for unauthenticated users).
+export default function PropertyCard({ property, isFavorited = false }) {
   const { user }              = useAuth()
-  const [liked, setLiked]     = useState(false)
+  const [liked, setLiked]     = useState(isFavorited)
   const [toggling, setToggling] = useState(false)
 
   const image = property.images?.[0]?.url || property.primaryImage || 'https://placehold.co/400x280?text=No+Image'

@@ -77,6 +77,14 @@ export default function PropertyDetail() {
 
   const images = property.images?.length ? property.images : [{ url: 'https://placehold.co/800x500?text=No+Image' }]
 
+  // FIX #9: Compare IDs as strings. user.id is a string from JWT payload,
+  // but property.host._id is a MongoDB ObjectId. Direct !== comparison would
+  // always be true (different types), so the "Message Host" button would never
+  // hide for the host viewing their own property.
+  const isOwnProperty = user && property.host?._id &&
+    (user.id?.toString() === property.host._id.toString() ||
+     user._id?.toString() === property.host._id.toString())
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       {/* Back */}
@@ -144,7 +152,8 @@ export default function PropertyDetail() {
               <p className="font-semibold text-sm">{property.host?.name}</p>
               <p className="text-xs text-gray-500">Host</p>
             </div>
-            {user && user.id !== property.host?._id && (
+            {/* FIX #9 applied: only show "Message Host" when logged in and not the property owner */}
+            {user && !isOwnProperty && (
               <button onClick={handleMessage} className="ml-auto flex items-center gap-2 btn-secondary text-sm">
                 <MessageCircle size={16} /> Message Host
               </button>
@@ -194,42 +203,49 @@ export default function PropertyDetail() {
               <span className="text-gray-500 text-sm"> /night</span>
             </div>
 
-            <form onSubmit={handleBook} className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Check-in</label>
-                  <input type="date" required min={new Date().toISOString().split('T')[0]} className="input-field text-sm"
-                    value={booking.checkIn} onChange={e => setBooking({ ...booking, checkIn: e.target.value })} />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Check-out</label>
-                  <input type="date" required min={booking.checkIn || new Date().toISOString().split('T')[0]} className="input-field text-sm"
-                    value={booking.checkOut} onChange={e => setBooking({ ...booking, checkOut: e.target.value })} />
-                </div>
+            {/* Hide booking form if user is the host */}
+            {isOwnProperty ? (
+              <div className="text-center py-4 text-sm text-gray-500 bg-gray-50 rounded-xl">
+                This is your property
               </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Guests</label>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-400">Adults</label>
-                    <input type="number" min="1" max={property.details?.maxGuests} className="input-field text-sm"
-                      value={booking.adults} onChange={e => setBooking({ ...booking, adults: Number(e.target.value) })} />
+            ) : (
+              <form onSubmit={handleBook} className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Check-in</label>
+                    <input type="date" required min={new Date().toISOString().split('T')[0]} className="input-field text-sm"
+                      value={booking.checkIn} onChange={e => setBooking({ ...booking, checkIn: e.target.value })} />
                   </div>
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-400">Children</label>
-                    <input type="number" min="0" className="input-field text-sm"
-                      value={booking.children} onChange={e => setBooking({ ...booking, children: Number(e.target.value) })} />
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Check-out</label>
+                    <input type="date" required min={booking.checkIn || new Date().toISOString().split('T')[0]} className="input-field text-sm"
+                      value={booking.checkOut} onChange={e => setBooking({ ...booking, checkOut: e.target.value })} />
                   </div>
                 </div>
-              </div>
 
-              <button type="submit" disabled={bookingLoading} className="btn-primary w-full py-3">
-                {bookingLoading ? 'Booking...' : 'Reserve'}
-              </button>
-            </form>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Guests</label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-400">Adults</label>
+                      <input type="number" min="1" max={property.details?.maxGuests} className="input-field text-sm"
+                        value={booking.adults} onChange={e => setBooking({ ...booking, adults: Number(e.target.value) })} />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-400">Children</label>
+                      <input type="number" min="0" className="input-field text-sm"
+                        value={booking.children} onChange={e => setBooking({ ...booking, children: Number(e.target.value) })} />
+                    </div>
+                  </div>
+                </div>
 
-            {booking.checkIn && booking.checkOut && (
+                <button type="submit" disabled={bookingLoading} className="btn-primary w-full py-3">
+                  {bookingLoading ? 'Booking...' : 'Reserve'}
+                </button>
+              </form>
+            )}
+
+            {!isOwnProperty && booking.checkIn && booking.checkOut && (
               <div className="mt-4 pt-4 border-t border-gray-100 text-sm space-y-2">
                 <div className="flex justify-between text-gray-600">
                   <span>₹{property.pricing?.basePrice?.toLocaleString()} × nights</span>

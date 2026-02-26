@@ -2,16 +2,22 @@ import { useState, useEffect } from 'react'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import api from '../../api/axios'
 import PropertyCard from '../../components/common/PropertyCard'
+import { useAuth } from '../../context/AuthContext'
 
 const PROPERTY_TYPES = ['all', 'apartment', 'house', 'villa', 'cabin', 'cottage', 'studio']
 
 export default function Home() {
-  const [properties, setProperties] = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [search, setSearch]         = useState('')
-  const [type, setType]             = useState('all')
-  const [maxPrice, setMaxPrice]     = useState('')
-  const [showFilters, setShowFilters] = useState(false)
+  const { user }                          = useAuth()
+  const [properties, setProperties]       = useState([])
+  const [loading, setLoading]             = useState(true)
+  const [search, setSearch]               = useState('')
+  const [type, setType]                   = useState('all')
+  const [maxPrice, setMaxPrice]           = useState('')
+  const [showFilters, setShowFilters]     = useState(false)
+  // FIX #8: Track the set of property IDs the user has favorited so we can pass
+  // correct initial state to PropertyCard. Without this, all heart icons start as
+  // un-liked on every page load, even if the user previously favorited them.
+  const [favoritedIds, setFavoritedIds]   = useState(new Set())
 
   const fetchProperties = async () => {
     setLoading(true)
@@ -26,7 +32,24 @@ export default function Home() {
     finally  { setLoading(false) }
   }
 
-  useEffect(() => { fetchProperties() }, [type])
+  // Fetch user's favorited IDs in parallel (only when logged in)
+  const fetchFavoriteIds = async () => {
+    if (!user) { setFavoritedIds(new Set()); return }
+    try {
+      const res = await api.get('/favorites')
+      const ids = (res.data.data || []).map(f => f.property?._id || f.property)
+      setFavoritedIds(new Set(ids))
+    } catch { /* non-critical, silently ignore */ }
+  }
+
+  useEffect(() => {
+    fetchProperties()
+  }, [type])
+
+  // Re-fetch favorite IDs when user logs in or out
+  useEffect(() => {
+    fetchFavoriteIds()
+  }, [user?.id])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -115,7 +138,13 @@ export default function Home() {
         <>
           <p className="text-sm text-gray-500 mb-4">{properties.length} properties found</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {properties.map(p => <PropertyCard key={p._id} property={p} />)}
+            {properties.map(p => (
+              <PropertyCard
+                key={p._id}
+                property={p}
+                isFavorited={favoritedIds.has(p._id)}
+              />
+            ))}
           </div>
         </>
       )}

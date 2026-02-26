@@ -4,7 +4,7 @@ import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
-const POLL_INTERVAL = 5000 // 5 seconds
+const POLL_INTERVAL = 5000
 
 export default function Messages() {
   const { user }                          = useAuth()
@@ -14,14 +14,13 @@ export default function Messages() {
   const [text, setText]                  = useState('')
   const [loading, setLoading]            = useState(true)
   const [sending, setSending]            = useState(false)
-  const [newMsg, setNewMsg]              = useState(false) // indicator when new msg arrives
+  const [newMsg, setNewMsg]              = useState(false)
 
   const bottomRef    = useRef(null)
-  const activeRef    = useRef(null)   // ref copy so interval can read current value
-  const messagesRef  = useRef([])     // ref copy for comparison in poll
+  const activeRef    = useRef(null)
+  const messagesRef  = useRef([])
   const intervalRef  = useRef(null)
 
-  // Keep refs in sync
   useEffect(() => { activeRef.current   = active  }, [active])
   useEffect(() => { messagesRef.current = messages }, [messages])
 
@@ -52,14 +51,16 @@ export default function Messages() {
     try {
       const res = await api.get(`/messages/${activeRef.current._id}`)
       const fresh = res.data.data?.messages || []
-
-      // Only update state if there are genuinely new messages
       if (fresh.length > messagesRef.current.length) {
         const newOnes = fresh.slice(messagesRef.current.length)
-        // Check if any new message is from the other person (not me)
+        // FIX #12: Compare sender IDs as strings. sender._id is a MongoDB ObjectId
+        // from the populated response; user.id is a plain string from JWT. Direct ===
+        // comparison always returns false (different types), so ALL incoming messages
+        // were treated as "from someone else," triggering false "New message" flashes
+        // even for the user's own sent messages.
         const hasIncoming = newOnes.some(m => {
-          const senderId = m.sender?._id || m.sender
-          return senderId !== user?.id
+          const senderId = (m.sender?._id || m.sender)?.toString()
+          return senderId !== user?.id?.toString()
         })
         setMessages(fresh)
         if (hasIncoming) {
@@ -67,12 +68,9 @@ export default function Messages() {
           setTimeout(() => setNewMsg(false), 2000)
         }
       }
-    } catch {
-      // silent fail on poll — don't toast on background polls
-    }
+    } catch { /* silent fail on background polls */ }
   }, [user?.id])
 
-  // ─── Also poll conversation list to update unread/last message ─
   const pollConversations = useCallback(async () => {
     try {
       const res = await api.get('/messages/conversations')
@@ -80,13 +78,11 @@ export default function Messages() {
     } catch { /* silent */ }
   }, [])
 
-  // ─── Start/stop polling interval ──────────────────────────────
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       pollMessages()
       pollConversations()
     }, POLL_INTERVAL)
-
     return () => clearInterval(intervalRef.current)
   }, [pollMessages, pollConversations])
 
@@ -108,11 +104,13 @@ export default function Messages() {
     finally  { setSending(false) }
   }
 
+  // FIX #13: otherPerson comparison also needs toString() for the same ID type mismatch reason.
+  // Without this, hosts always saw themselves as the "other person" in a conversation.
   const otherPerson = (conv) => {
     if (!conv?.host || !conv?.guest) return {}
-    return (conv.host._id === user?.id || conv.host.id === user?.id)
-      ? conv.guest
-      : conv.host
+    const userId = user?.id?.toString()
+    const isHost = (conv.host._id || conv.host.id || conv.host)?.toString() === userId
+    return isHost ? conv.guest : conv.host
   }
 
   if (loading) return (
@@ -127,7 +125,6 @@ export default function Messages() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Messages</h1>
-        {/* Live indicator */}
         <div className="flex items-center gap-2 text-xs text-gray-400">
           <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
           Live · updates every 5s
@@ -154,7 +151,9 @@ export default function Messages() {
             <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
               {conversations.map(c => {
                 const other = otherPerson(c)
-                const unreadKey = (c.host?._id === user?.id || c.host?.id === user?.id) ? 'host' : 'guest'
+                const userId = user?.id?.toString()
+                const isHost = (c.host?._id || c.host?.id || c.host)?.toString() === userId
+                const unreadKey = isHost ? 'host' : 'guest'
                 const hasUnread = (c.unreadCount?.[unreadKey] || 0) > 0
 
                 return (
@@ -220,7 +219,6 @@ export default function Messages() {
                   <p className="font-medium text-sm">{otherPerson(active).name}</p>
                   <p className="text-xs text-gray-400">{active.property?.title}</p>
                 </div>
-                {/* New message flash */}
                 {newMsg && (
                   <span className="text-xs text-rose-500 font-medium animate-pulse">
                     New message ↓
@@ -235,8 +233,9 @@ export default function Messages() {
                     No messages yet. Say hi! 👋
                   </div>
                 ) : messages.map(m => {
-                  const senderId = m.sender?._id || m.sender
-                  const isMine   = senderId === user?.id
+                  // FIX #12 applied here too — toString() for type-safe comparison
+                  const senderId = (m.sender?._id || m.sender)?.toString()
+                  const isMine   = senderId === user?.id?.toString()
                   return (
                     <div key={m._id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                       {!isMine && (

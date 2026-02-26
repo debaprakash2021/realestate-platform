@@ -14,11 +14,16 @@ const STATUS_STYLES = {
 }
 
 export default function MyBookings() {
-  const [bookings, setBookings]       = useState([])
-  const [loading, setLoading]         = useState(true)
-  const [reviewBooking, setReviewBooking] = useState(null) // booking to review
+  const [bookings, setBookings]           = useState([])
+  const [loading, setLoading]             = useState(true)
+  const [reviewBooking, setReviewBooking] = useState(null)
 
   useEffect(() => {
+    // FIX #11: The Booking model has a `hasReview` boolean field that is set to true
+    // by reviewService when a review is submitted. We must use this server value as the
+    // authoritative source — not local optimistic state alone. Without this, after
+    // logout/login the "Leave Review" button reappears for already-reviewed bookings
+    // because the local state resets. The field is now seeded directly from the API.
     api.get('/bookings/my-bookings')
       .then(r => setBookings(r.data.data?.bookings || r.data.data || []))
       .catch(() => toast.error('Failed to load bookings'))
@@ -37,7 +42,7 @@ export default function MyBookings() {
   }
 
   const handleReviewSubmitted = (bookingId) => {
-    // Mark as reviewed in UI immediately
+    // Update local state immediately so UI is responsive
     setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, hasReview: true } : b))
   }
 
@@ -100,7 +105,7 @@ export default function MyBookings() {
                           Cancel
                         </button>
                       )}
-                      {/* ✅ NEW: Inline review modal instead of redirect */}
+                      {/* hasReview comes from DB — persists across login/logout */}
                       {b.status === 'completed' && !b.hasReview && (
                         <button
                           onClick={() => setReviewBooking(b)}

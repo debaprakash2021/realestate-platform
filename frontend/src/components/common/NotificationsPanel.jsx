@@ -128,10 +128,13 @@ export default function NotificationsPanel() {
                 <p className="text-xs text-gray-300 mt-1">We'll notify you about bookings, messages & more</p>
               </div>
             ) : notifications.map(n => (
+              // FIX #6: Added 'group' class to this div.
+              // The delete button uses opacity-0 group-hover:opacity-100, but without
+              // the 'group' class on a parent, group-hover never triggers — button stays invisible forever.
               <div
                 key={n._id}
                 onClick={() => !n.isRead && markRead(n._id)}
-                className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${!n.isRead ? 'bg-rose-50/50' : ''}`}
+                className={`group flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${!n.isRead ? 'bg-rose-50/50' : ''}`}
               >
                 <div className="text-xl shrink-0 mt-0.5">{TYPE_ICON[n.type] || TYPE_ICON.default}</div>
                 <div className="flex-1 min-w-0">
@@ -147,7 +150,7 @@ export default function NotificationsPanel() {
                   )}
                   <button
                     onClick={(e) => deleteNotif(n._id, e)}
-                    className="p-1 text-gray-200 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                     title="Delete"
                   >
                     <Trash2 size={13} />

@@ -4,6 +4,20 @@ import toast from 'react-hot-toast'
 
 const AuthContext = createContext()
 
+// FIX #10: Normalize user object so user.id is ALWAYS a string.
+// After login, the server returns { id: ObjectId, ... } (explicit id field).
+// After /auth/me, the server returns a full Mongoose document where _id is present
+// and `id` is a virtual. Downstream components (Messages, PropertyDetail) use
+// user.id for ID comparisons — if it's missing or an ObjectId instead of a string,
+// comparisons silently fail. This helper ensures consistent shape everywhere.
+const normalizeUser = (userData) => {
+  if (!userData) return null
+  return {
+    ...userData,
+    id: (userData.id || userData._id)?.toString()
+  }
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser]       = useState(null)
   const [loading, setLoading] = useState(true)
@@ -15,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
     api.get('/auth/me')
       .then(res => {
-        const freshUser = res.data.data
+        const freshUser = normalizeUser(res.data.data)
         localStorage.setItem('user', JSON.stringify(freshUser))
         setUser(freshUser)
       })
@@ -30,28 +44,26 @@ export const AuthProvider = ({ children }) => {
   // ─── Login ─────────────────────────────────────────────────────
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password })
-    const { user, token } = res.data.data
+    const { user: rawUser, token } = res.data.data
+    const normalizedUser = normalizeUser(rawUser)
     localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(user))
-    setUser(user)
-    return user
+    localStorage.setItem('user', JSON.stringify(normalizedUser))
+    setUser(normalizedUser)
+    return normalizedUser
   }
 
   // ─── Register ─────────────────────────────────────────────────
-  // New flow: register only sends OTP — no token returned yet.
-  // Returns { requiresVerification: true, email } so the UI can
-  // switch to the OTP step.
   const register = async (name, email, password, role = 'guest') => {
     const res = await api.post('/auth/register', { name, email, password, role })
-    return res.data.data // { requiresVerification, email, message }
+    return res.data.data
   }
 
   // ─── Called after OTP verified ────────────────────────────────
-  // Stores token + user in context without a page reload
   const setLoggedIn = (userData, token) => {
+    const normalizedUser = normalizeUser(userData)
     localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(userData))
-    setUser(userData)
+    localStorage.setItem('user', JSON.stringify(normalizedUser))
+    setUser(normalizedUser)
   }
 
   // ─── Logout ────────────────────────────────────────────────────
@@ -64,7 +76,7 @@ export const AuthProvider = ({ children }) => {
 
   // ─── Update user (profile edits etc) ──────────────────────────
   const updateUser = (updated) => {
-    const merged = { ...user, ...updated }
+    const merged = normalizeUser({ ...user, ...updated })
     localStorage.setItem('user', JSON.stringify(merged))
     setUser(merged)
   }
