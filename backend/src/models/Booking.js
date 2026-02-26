@@ -43,16 +43,17 @@ const bookingSchema = new mongoose.Schema({
 
   // ─── Pricing Breakdown ────────────────────────────────────────
   pricing: {
-    basePrice:       { type: Number, required: true },  // per night
+    basePrice:       { type: Number, required: true },
     nights:          { type: Number, required: true },
-    subtotal:        { type: Number, required: true },  // basePrice x nights
+    subtotal:        { type: Number, required: true },
     weeklyDiscount:  { type: Number, default: 0 },
     monthlyDiscount: { type: Number, default: 0 },
     cleaningFee:     { type: Number, default: 0 },
     serviceFee:      { type: Number, default: 0 },
     securityDeposit: { type: Number, default: 0 },
-    totalAmount:     { type: Number, required: true },  // final amount guest pays
-    currency:        { type: String, default: 'USD' }
+    totalAmount:     { type: Number, required: true },
+    // FIX #1: Was 'USD' — changed to 'INR' since this is an India-focused platform
+    currency:        { type: String, default: 'INR' }
   },
 
   // ─── Booking Status ───────────────────────────────────────────
@@ -66,13 +67,16 @@ const bookingSchema = new mongoose.Schema({
   payment: {
     status: {
       type: String,
-      enum: ['pending', 'held', 'released', 'refunded', 'failed'],
+      // FIX #2: 'pay_on_arrival' was missing from enum.
+      // PaymentService sets this value, causing a MongoValidationError on save.
+      // GuestDashboard also reads this value for payment history display.
+      enum: ['pending', 'held', 'released', 'refunded', 'failed', 'pay_on_arrival'],
       default: 'pending'
     },
     method:        { type: String, default: 'card' },
     transactionId: { type: String },
     paidAt:        { type: Date },
-    releasedAt:    { type: Date },  // when funds released to host
+    releasedAt:    { type: Date },
     refundedAt:    { type: Date }
   },
 
@@ -93,8 +97,8 @@ const bookingSchema = new mongoose.Schema({
 
   // ─── Flags ────────────────────────────────────────────────────
   isInstantBooking: { type: Boolean, default: false },
-  hasReview:        { type: Boolean, default: false },  // did guest leave a review?
-  guestConfirmed:   { type: Boolean, default: false },  // guest confirmed check-in
+  hasReview:        { type: Boolean, default: false },
+  guestConfirmed:   { type: Boolean, default: false },
 
 }, {
   timestamps: true,
@@ -124,18 +128,15 @@ bookingSchema.virtual('duration').get(function() {
 });
 
 // ─── Static: Check for conflicting bookings ───────────────────────
-// This is the CORE conflict prevention logic
 bookingSchema.statics.hasConflict = async function(propertyId, checkIn, checkOut, excludeBookingId = null) {
   const query = {
     property: propertyId,
     status:   { $in: ['pending', 'confirmed'] },
     $or: [
-      // New booking starts during existing booking
-      { checkIn:  { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
+      { checkIn: { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
     ]
   };
 
-  // Exclude current booking when updating
   if (excludeBookingId) {
     query._id = { $ne: excludeBookingId };
   }

@@ -90,11 +90,9 @@ class BookingService {
       $inc:  { 'stats.totalBookings': 1 }
     });
 
-    // ─── Format dates for notification ───────────────────────────
     const fmt = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
     const guestPhone = guest.phone ? ` | 📞 ${guest.phone}` : '';
 
-    // 🔔 Notify HOST — rich message with guest + booking details
     await Notification.create({
       user:    property.host._id,
       type:    'booking_confirmed',
@@ -103,7 +101,6 @@ class BookingService {
       data:    { bookingId: booking._id, propertyId, guestName: guest.name, guestEmail: guest.email }
     });
 
-    // 🔔 Notify GUEST — confirmation + prompt to pay
     await Notification.create({
       user:    guestId,
       type:    'booking_confirmed',
@@ -119,7 +116,7 @@ class BookingService {
     ]);
   }
 
-  // ─── Get All Bookings (admin — searchable by guestId / hostId / bookingId) ──
+  // ─── Get All Bookings (admin) ─────────────────────────────────────
   static async getAllBookings(query) {
     const { status, page = 1, limit = 10, guestId, hostId, bookingId } = query;
     const filter = {};
@@ -183,21 +180,30 @@ class BookingService {
     return { bookings, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) } };
   }
 
+  // FIX #4: confirmBooking was incorrectly setting payment.status = 'held' and paidAt
+  // when the host confirms a booking. Confirming ≠ paying. Payment status should only
+  // change when the guest actually pays via the payment flow. This caused the payment
+  // history to show "In Escrow" before any money was actually collected.
   static async confirmBooking(bookingId, hostId) {
     const booking = await Booking.findOne({ _id: bookingId, host: hostId });
     if (!booking)                    throw new Error('Booking not found or unauthorized');
     if (booking.status !== 'pending') throw new Error('Only pending bookings can be confirmed');
-    booking.status         = 'confirmed';
-    booking.payment.status = 'held';
-    booking.payment.paidAt = new Date();
+    booking.status = 'confirmed';
+    // Do NOT touch payment.status here — payment hasn't occurred yet
     await booking.save();
     return booking;
   }
 
+  // FIX #5: rejectBooking was only allowing rejection of 'pending' bookings.
+  // The host UI shows a "Reject" button for both pending AND confirmed bookings,
+  // so confirmed bookings could never actually be rejected — the backend always threw.
+  // Now both pending and confirmed bookings can be rejected by the host.
   static async rejectBooking(bookingId, hostId, reason) {
     const booking = await Booking.findOne({ _id: bookingId, host: hostId });
-    if (!booking)                    throw new Error('Booking not found or unauthorized');
-    if (booking.status !== 'pending') throw new Error('Only pending bookings can be rejected');
+    if (!booking) throw new Error('Booking not found or unauthorized');
+    if (!['pending', 'confirmed'].includes(booking.status)) {
+      throw new Error('Only pending or confirmed bookings can be rejected');
+    }
     booking.status                   = 'rejected';
     booking.cancellation.cancelledBy = hostId;
     booking.cancellation.cancelledAt = new Date();
