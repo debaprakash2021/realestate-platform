@@ -1,19 +1,46 @@
 import { useState, useEffect } from 'react'
-import { Building, Search, MapPin, Star, CheckCircle, XCircle, Trash2, RefreshCw, BadgeCheck, Sparkles } from 'lucide-react'
+import { Building, Search, MapPin, Star, CheckCircle, XCircle, Trash2, RefreshCw, BadgeCheck, Sparkles, ThumbsUp, ThumbsDown } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 
 const STATUS_CONFIG = {
-  active:    { cls: 'bg-green-100 text-green-700',  label: 'Active'    },
-  inactive:  { cls: 'bg-gray-100 text-gray-600',    label: 'Inactive'  },
-  suspended: { cls: 'bg-red-100 text-red-700',      label: 'Suspended' },
+  active: { cls: 'bg-green-100 text-green-700', label: 'Active' },
+  inactive: { cls: 'bg-gray-100 text-gray-600', label: 'Inactive' },
+  suspended: { cls: 'bg-red-100 text-red-700', label: 'Suspended' },
+  pending: { cls: 'bg-amber-100 text-amber-700', label: '⏳ Pending Approval' },
+  rejected: { cls: 'bg-red-100 text-red-600', label: '❌ Rejected' },
 }
 
 const fmt = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
 function PropertyRow({ property, onUpdate, onDelete }) {
   const [acting, setActing] = useState(false)
+  const [rejectModal, setRejectModal] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
   const st = STATUS_CONFIG[property.status] || STATUS_CONFIG.inactive
+
+  const doApprove = async () => {
+    setActing(true)
+    try {
+      await api.put(`/admin/properties/${property._id}/approve`)
+      toast.success('✅ Property approved — now live!')
+      onUpdate(property._id, { status: 'active' })
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to approve')
+    } finally { setActing(false) }
+  }
+
+  const doReject = async () => {
+    setActing(true)
+    try {
+      await api.put(`/admin/properties/${property._id}/reject`, { reason: rejectReason })
+      toast.success('Property rejected — host notified')
+      onUpdate(property._id, { status: 'rejected' })
+      setRejectModal(false)
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reject')
+    } finally { setActing(false) }
+  }
 
   const doVerify = async () => {
     setActing(true)
@@ -63,126 +90,176 @@ function PropertyRow({ property, onUpdate, onDelete }) {
   const img = property.images?.[0]?.url || 'https://placehold.co/56x56?text=🏠'
 
   return (
-    <div className={`border rounded-xl p-4 transition-colors ${
-      property.status === 'suspended' ? 'border-red-100 bg-red-50/20' : 'border-gray-100 hover:bg-gray-50'
-    }`}>
-      <div className="flex flex-col sm:flex-row gap-4">
+    <>
+      <div className={`border rounded-xl p-4 transition-colors ${property.status === 'suspended' ? 'border-red-100 bg-red-50/20' :
+        property.status === 'pending' ? 'border-amber-200 bg-amber-50/30' :
+          property.status === 'rejected' ? 'border-red-100 bg-red-50/10' :
+            'border-gray-100 hover:bg-gray-50'
+        }`}>
+        <div className="flex flex-col sm:flex-row gap-4">
 
-        {/* Image + Title */}
-        <div className="flex gap-3 flex-1 min-w-0">
-          <img
-            src={img} alt=""
-            className="w-14 h-14 rounded-xl object-cover shrink-0"
-            onError={e => e.target.src = 'https://placehold.co/56x56?text=🏠'}
-          />
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="font-semibold text-sm text-gray-900 truncate">{property.title}</p>
-              {property.isVerified && (
-                <span title="Verified"><BadgeCheck size={14} className="text-blue-500 shrink-0" /></span>
-              )}
-              {property.isFeatured && (
-                <span title="Featured"><Sparkles size={14} className="text-yellow-500 shrink-0" /></span>
-              )}
-            </div>
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-              <MapPin size={11} /> {property.location?.city}, {property.location?.state}, {property.location?.country}
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              ₹{property.pricing?.basePrice?.toLocaleString()}/night
-              {property.ratings?.average > 0 && (
-                <span className="ml-2">⭐ {property.ratings.average} ({property.ratings.count})</span>
-              )}
-              <span className="ml-2">🏠 {property.stats?.totalBookings || 0} bookings</span>
-            </p>
-            <p className="text-xs text-gray-300 font-mono mt-0.5">ID: {property._id}</p>
-          </div>
-        </div>
-
-        {/* Host */}
-        <div className="min-w-[140px] shrink-0">
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Host</p>
-          <div className="flex items-center gap-2">
+          {/* Image + Title */}
+          <div className="flex gap-3 flex-1 min-w-0">
             <img
-              src={property.host?.avatar?.url || 'https://via.placeholder.com/28'}
-              alt=""
-              className="w-7 h-7 rounded-full object-cover shrink-0"
+              src={img} alt=""
+              className="w-14 h-14 rounded-xl object-cover shrink-0"
+              onError={e => e.target.src = 'https://placehold.co/56x56?text=🏠'}
             />
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{property.host?.name}</p>
-              <p className="text-xs text-gray-400 truncate">{property.host?.email}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="font-semibold text-sm text-gray-900 truncate">{property.title}</p>
+                {property.isVerified && (
+                  <span title="Verified"><BadgeCheck size={14} className="text-blue-500 shrink-0" /></span>
+                )}
+                {property.isFeatured && (
+                  <span title="Featured"><Sparkles size={14} className="text-yellow-500 shrink-0" /></span>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                <MapPin size={11} /> {property.location?.city}, {property.location?.state}, {property.location?.country}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                ₹{property.pricing?.basePrice?.toLocaleString()}/night
+                {property.ratings?.average > 0 && (
+                  <span className="ml-2">⭐ {property.ratings.average} ({property.ratings.count})</span>
+                )}
+                <span className="ml-2">🏠 {property.stats?.totalBookings || 0} bookings</span>
+              </p>
+              <p className="text-xs text-gray-300 font-mono mt-0.5">ID: {property._id}</p>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-1">Listed: {fmt(property.createdAt)}</p>
-        </div>
 
-        {/* Status + Actions */}
-        <div className="flex flex-col gap-2 shrink-0 items-end">
-          {/* Status badge + dropdown */}
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${st.cls}`}>{st.label}</span>
-            <select
-              value={property.status}
-              onChange={e => doStatus(e.target.value)}
-              disabled={acting}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-white disabled:opacity-50"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
-            </select>
+          {/* Host */}
+          <div className="min-w-[140px] shrink-0">
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Host</p>
+            <div className="flex items-center gap-2">
+              <img
+                src={property.host?.avatar?.url || 'https://via.placeholder.com/28'}
+                alt=""
+                className="w-7 h-7 rounded-full object-cover shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{property.host?.name}</p>
+                <p className="text-xs text-gray-400 truncate">{property.host?.email}</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Listed: {fmt(property.createdAt)}</p>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex gap-1.5">
-            <button
-              onClick={doVerify}
-              disabled={acting}
-              title={property.isVerified ? 'Remove verification' : 'Verify listing'}
-              className={`p-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${
-                property.isVerified
+          {/* Status + Actions */}
+          <div className="flex flex-col gap-2 shrink-0 items-end">
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${st.cls}`}>{st.label}</span>
+
+            {/* ── Pending: show Approve / Reject prominently ── */}
+            {property.status === 'pending' && (
+              <div className="flex gap-2">
+                <button
+                  onClick={doApprove}
+                  disabled={acting}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <ThumbsUp size={13} /> Approve
+                </button>
+                <button
+                  onClick={() => setRejectModal(true)}
+                  disabled={acting}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <ThumbsDown size={13} /> Reject
+                </button>
+              </div>
+            )}
+
+            {/* ── For non-pending: show usual controls ── */}
+            {property.status !== 'pending' && (
+              <div className="flex items-center gap-2">
+                <select
+                  value={property.status}
+                  onChange={e => doStatus(e.target.value)}
+                  disabled={acting}
+                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-white disabled:opacity-50"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-1.5">
+              <button
+                onClick={doVerify}
+                disabled={acting}
+                title={property.isVerified ? 'Remove verification' : 'Verify listing'}
+                className={`p-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${property.isVerified
                   ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                   : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <BadgeCheck size={14} />
-              {property.isVerified ? 'Verified' : 'Verify'}
-            </button>
-            <button
-              onClick={doFeature}
-              disabled={acting}
-              title={property.isFeatured ? 'Remove from featured' : 'Feature this listing'}
-              className={`p-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${
-                property.isFeatured
+                  }`}
+              >
+                <BadgeCheck size={14} />
+                {property.isVerified ? 'Verified' : 'Verify'}
+              </button>
+              <button
+                onClick={doFeature}
+                disabled={acting}
+                title={property.isFeatured ? 'Remove from featured' : 'Feature this listing'}
+                className={`p-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${property.isFeatured
                   ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                   : 'bg-gray-100 text-gray-600 hover:bg-yellow-50 hover:text-yellow-600'
-              }`}
-            >
-              <Sparkles size={14} />
-              {property.isFeatured ? 'Featured' : 'Feature'}
-            </button>
-            <button
-              onClick={doDelete}
-              disabled={acting}
-              title="Delete property permanently"
-              className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-            >
-              <Trash2 size={14} />
-            </button>
+                  }`}
+              >
+                <Sparkles size={14} />
+                {property.isFeatured ? 'Featured' : 'Feature'}
+              </button>
+              <button
+                onClick={doDelete}
+                disabled={acting}
+                title="Delete property permanently"
+                className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Reject reason modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="font-bold text-gray-900 mb-1">Reject Property</h3>
+            <p className="text-sm text-gray-500 mb-4">Optionally add a reason — it'll be sent to the host.</p>
+            <textarea
+              rows={3}
+              placeholder="e.g. Images are unclear, description too short..."
+              className="input-field resize-none mb-4 text-sm"
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+            />
+            <div className="flex gap-3">
+              <button onClick={() => setRejectModal(false)} className="flex-1 btn-secondary text-sm">Cancel</button>
+              <button onClick={doReject} disabled={acting}
+                className="flex-1 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
+                {acting ? 'Rejecting...' : 'Confirm Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
 export default function AdminProperties() {
   const [properties, setProperties] = useState([])
-  const [loading,    setLoading]    = useState(true)
-  const [search,     setSearch]     = useState('')
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [page,       setPage]       = useState(1)
-  const [total,      setTotal]      = useState(0)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
   const LIMIT = 20
 
   const fetchProperties = async (s = search, st = statusFilter, p = page) => {
@@ -222,7 +299,7 @@ export default function AdminProperties() {
     setTotal(t => t - 1)
   }
 
-  const tabs = ['all', 'active', 'inactive', 'suspended']
+  const tabs = ['all', 'pending', 'active', 'inactive', 'suspended', 'rejected']
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
@@ -252,11 +329,10 @@ export default function AdminProperties() {
           <button
             key={t}
             onClick={() => handleStatusFilter(t)}
-            className={`px-4 py-2 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-colors ${
-              statusFilter === t
-                ? 'bg-rose-500 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-rose-300'
-            }`}
+            className={`px-4 py-2 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-colors ${statusFilter === t
+              ? 'bg-rose-500 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:border-rose-300'
+              }`}
           >
             {t === 'all' ? 'All' : t}
           </button>

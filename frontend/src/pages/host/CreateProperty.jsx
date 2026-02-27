@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Home, MapPin, DollarSign, Settings, CheckSquare } from 'lucide-react'
+import { Home, MapPin, DollarSign, Settings, CheckSquare, Clock, CheckCircle, ArrowRight } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 
-const AMENITIES = ['wifi','kitchen','airConditioning','heating','freeParking','pool','tv','washer','hotTub','bbqGrill','petsAllowed','smokingAllowed']
+const AMENITIES = ['wifi', 'kitchen', 'airConditioning', 'heating', 'freeParking', 'pool', 'tv', 'washer', 'hotTub', 'bbqGrill', 'petsAllowed', 'smokingAllowed']
 
 const steps = ['Basic Info', 'Location', 'Pricing', 'Details', 'Amenities']
 
 export default function CreateProperty() {
-  const navigate      = useNavigate()
+  const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({
     title: '', description: '', propertyType: 'apartment', roomType: 'entire_place',
     location: { address: '', city: '', state: '', country: 'India', zipCode: '', coordinates: { type: 'Point', coordinates: [0, 0] } },
@@ -28,14 +29,59 @@ export default function CreateProperty() {
     setLoading(true)
     try {
       await api.post('/properties', form)
-      toast.success('Property listed successfully! 🎉')
-      navigate('/host/properties')
+      setSubmitted(true)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create property')
     } finally { setLoading(false) }
   }
 
-  const stepIcons = [<Home size={16}/>, <MapPin size={16}/>, <DollarSign size={16}/>, <Settings size={16}/>, <CheckSquare size={16}/>]
+  const stepIcons = [<Home size={16} />, <MapPin size={16} />, <DollarSign size={16} />, <Settings size={16} />, <CheckSquare size={16} />]
+
+  // ── Pending Approval Success Screen ──────────────────────────────
+  if (submitted) return (
+    <div className="max-w-lg mx-auto px-4 py-16 text-center">
+      <div className="card p-10">
+        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Clock size={38} className="text-amber-500" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Submitted for Review! 🎉</h1>
+        <p className="text-gray-500 text-sm mb-6">
+          Your property <span className="font-semibold text-gray-800">"{form.title}"</span> has been
+          submitted and is now <span className="font-semibold text-amber-600">pending admin approval</span>.
+        </p>
+
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left mb-6 space-y-2">
+          <div className="flex items-start gap-2">
+            <CheckCircle size={15} className="text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800">Your listing has been received and saved.</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <Clock size={15} className="text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800">An admin will review it shortly (usually within 24 hours).</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <CheckCircle size={15} className="text-green-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800">You'll get a notification once it's approved or if any changes are needed.</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => navigate('/host/properties')}
+            className="btn-primary flex items-center justify-center gap-2"
+          >
+            View My Properties <ArrowRight size={16} />
+          </button>
+          <button
+            onClick={() => navigate('/host/dashboard')}
+            className="btn-secondary"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
@@ -47,9 +93,8 @@ export default function CreateProperty() {
         {steps.map((s, i) => (
           <div key={i} className="flex items-center">
             <button onClick={() => setStep(i)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                i === step ? 'bg-rose-500 text-white' : i < step ? 'bg-rose-100 text-rose-600' : 'bg-gray-100 text-gray-500'
-              }`}>
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${i === step ? 'bg-rose-500 text-white' : i < step ? 'bg-rose-100 text-rose-600' : 'bg-gray-100 text-gray-500'
+                }`}>
               {stepIcons[i]} <span className="hidden sm:inline">{s}</span>
             </button>
             {i < steps.length - 1 && <div className={`h-0.5 w-4 sm:w-8 mx-1 ${i < step ? 'bg-rose-300' : 'bg-gray-200'}`} />}
@@ -77,7 +122,7 @@ export default function CreateProperty() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
                 <select className="input-field" value={form.propertyType} onChange={e => set('propertyType', e.target.value)}>
-                  {['apartment','house','villa','cabin','cottage','studio','hostel'].map(t => <option key={t} value={t}>{t}</option>)}
+                  {['apartment', 'house', 'villa', 'cabin', 'cottage', 'studio', 'hostel'].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
@@ -169,7 +214,7 @@ export default function CreateProperty() {
           <div className="space-y-4">
             <h2 className="font-semibold text-gray-700 mb-4">Property Details</h2>
             <div className="grid grid-cols-2 gap-4">
-              {[['bedrooms','Bedrooms'],['bathrooms','Bathrooms'],['beds','Beds'],['maxGuests','Max Guests']].map(([f, l]) => (
+              {[['bedrooms', 'Bedrooms'], ['bathrooms', 'Bathrooms'], ['beds', 'Beds'], ['maxGuests', 'Max Guests']].map(([f, l]) => (
                 <div key={f}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{l}</label>
                   <input type="number" min="1" className="input-field" value={form.details[f]}
@@ -203,9 +248,8 @@ export default function CreateProperty() {
             <h2 className="font-semibold text-gray-700 mb-4">Amenities</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {AMENITIES.map(a => (
-                <label key={a} className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all text-sm ${
-                  form.amenities[a] ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}>
+                <label key={a} className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all text-sm ${form.amenities[a] ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}>
                   <input type="checkbox" className="hidden" checked={form.amenities[a]}
                     onChange={e => setForm(prev => ({ ...prev, amenities: { ...prev.amenities, [a]: e.target.checked } }))} />
                   {a.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}

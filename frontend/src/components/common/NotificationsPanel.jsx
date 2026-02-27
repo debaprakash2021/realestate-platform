@@ -5,22 +5,22 @@ import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
 const TYPE_ICON = {
-  booking_confirmed:  '✅',
-  booking_cancelled:  '❌',
-  booking_completed:  '🎉',
-  payment_received:   '💰',
-  review_received:    '⭐',
-  message_received:   '💬',
-  default:            '🔔'
+  booking_confirmed: '✅',
+  booking_cancelled: '❌',
+  booking_completed: '🎉',
+  payment_received: '💰',
+  review_received: '⭐',
+  message_received: '💬',
+  default: '🔔'
 }
 
 export default function NotificationsPanel() {
-  const { user }                          = useAuth()
-  const [open, setOpen]                   = useState(false)
+  const { user } = useAuth()
+  const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
-  const [unread, setUnread]               = useState(0)
-  const [loading, setLoading]             = useState(false)
-  const panelRef                          = useRef()
+  const [unread, setUnread] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const panelRef = useRef()
 
   // Close when clicking outside
   useEffect(() => {
@@ -31,13 +31,17 @@ export default function NotificationsPanel() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Fetch unread count on mount
+  // Fetch unread count on mount + poll every 30s for live badge updates
   useEffect(() => {
     if (!user) return
-    api.get('/notifications/unread-count')
-      .then(r => setUnread(r.data.data?.unreadCount || 0))
-      .catch(() => {})
-  }, [user])
+    const fetchCount = () =>
+      api.get('/notifications/unread-count')
+        .then(r => setUnread(r.data.data?.unreadCount || 0))
+        .catch(() => { })
+    fetchCount()
+    const interval = setInterval(fetchCount, 30000)
+    return () => clearInterval(interval)
+  }, [user?.id])
 
   const loadNotifications = async () => {
     if (loading) return
@@ -47,7 +51,7 @@ export default function NotificationsPanel() {
       setNotifications(res.data.data?.notifications || [])
       setUnread(res.data.data?.unreadCount || 0)
     } catch { toast.error('Failed to load notifications') }
-    finally  { setLoading(false) }
+    finally { setLoading(false) }
   }
 
   const handleToggle = () => {
@@ -61,7 +65,7 @@ export default function NotificationsPanel() {
       await api.put(`/notifications/${id}/read`)
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n))
       setUnread(prev => Math.max(0, prev - 1))
-    } catch {}
+    } catch { }
   }
 
   const markAllRead = async () => {
@@ -70,7 +74,7 @@ export default function NotificationsPanel() {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
       setUnread(0)
       toast.success('All marked as read')
-    } catch {}
+    } catch { }
   }
 
   const deleteNotif = async (id, e) => {
@@ -78,7 +82,7 @@ export default function NotificationsPanel() {
     try {
       await api.delete(`/notifications/${id}`)
       setNotifications(prev => prev.filter(n => n._id !== id))
-    } catch {}
+    } catch { }
   }
 
   if (!user) return null

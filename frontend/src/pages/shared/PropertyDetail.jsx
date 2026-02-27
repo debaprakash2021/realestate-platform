@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Star, MapPin, Users, Bed, Bath, Wifi, Car, Wind, Flame, Tv, Utensils, ArrowLeft, Heart, MessageCircle } from 'lucide-react'
 import api from '../../api/axios'
@@ -6,15 +6,40 @@ import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
 export default function PropertyDetail() {
-  const { id }          = useParams()
-  const { user }        = useAuth()
-  const navigate        = useNavigate()
+  const { id } = useParams()
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [property, setProperty] = useState(null)
-  const [reviews, setReviews]   = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [booking, setBooking]   = useState({ checkIn: '', checkOut: '', adults: 1, children: 0 })
+  const [reviews, setReviews] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [booking, setBooking] = useState({ checkIn: '', checkOut: '', adults: 1, children: 0 })
   const [bookingLoading, setBookingLoading] = useState(false)
   const [imgIdx, setImgIdx] = useState(0)
+
+  // ─── Live price calculation ──────────────────────────────────────
+  const priceCalc = useMemo(() => {
+    if (!booking.checkIn || !booking.checkOut || !property) return null
+    const msPerDay = 1000 * 60 * 60 * 24
+    const nights = Math.ceil((new Date(booking.checkOut) - new Date(booking.checkIn)) / msPerDay)
+    if (nights <= 0) return null
+
+    const p = property.pricing
+    const basePrice = p?.basePrice || 0
+    const subtotal = basePrice * nights
+
+    let weeklyDiscount = 0
+    let monthlyDiscount = 0
+    if (nights >= 30 && p?.monthlyDiscount > 0)
+      monthlyDiscount = Math.round(subtotal * (p.monthlyDiscount / 100))
+    else if (nights >= 7 && p?.weeklyDiscount > 0)
+      weeklyDiscount = Math.round(subtotal * (p.weeklyDiscount / 100))
+
+    const cleaningFee = p?.cleaningFee || 0
+    const serviceFee = p?.serviceFee || 0
+    const total = subtotal - weeklyDiscount - monthlyDiscount + cleaningFee + serviceFee
+
+    return { nights, basePrice, subtotal, weeklyDiscount, monthlyDiscount, cleaningFee, serviceFee, total }
+  }, [booking.checkIn, booking.checkOut, property])
 
   useEffect(() => {
     const load = async () => {
@@ -26,7 +51,7 @@ export default function PropertyDetail() {
         setProperty(propRes.data.data)
         setReviews(revRes.data.data?.reviews || [])
       } catch { toast.error('Property not found') }
-      finally  { setLoading(false) }
+      finally { setLoading(false) }
     }
     load()
   }, [id])
@@ -83,7 +108,7 @@ export default function PropertyDetail() {
   // hide for the host viewing their own property.
   const isOwnProperty = user && property.host?._id &&
     (user.id?.toString() === property.host._id.toString() ||
-     user._id?.toString() === property.host._id.toString())
+      user._id?.toString() === property.host._id.toString())
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
@@ -245,18 +270,40 @@ export default function PropertyDetail() {
               </form>
             )}
 
-            {!isOwnProperty && booking.checkIn && booking.checkOut && (
+            {!isOwnProperty && priceCalc && (
               <div className="mt-4 pt-4 border-t border-gray-100 text-sm space-y-2">
                 <div className="flex justify-between text-gray-600">
-                  <span>₹{property.pricing?.basePrice?.toLocaleString()} × nights</span>
-                  <span>subtotal</span>
+                  <span>₹{priceCalc.basePrice.toLocaleString()} × {priceCalc.nights} night{priceCalc.nights > 1 ? 's' : ''}</span>
+                  <span>₹{priceCalc.subtotal.toLocaleString()}</span>
                 </div>
-                {property.pricing?.cleaningFee > 0 && (
-                  <div className="flex justify-between text-gray-600">
-                    <span>Cleaning fee</span>
-                    <span>₹{property.pricing.cleaningFee}</span>
+                {priceCalc.weeklyDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Weekly discount</span>
+                    <span>−₹{priceCalc.weeklyDiscount.toLocaleString()}</span>
                   </div>
                 )}
+                {priceCalc.monthlyDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Monthly discount</span>
+                    <span>−₹{priceCalc.monthlyDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+                {priceCalc.cleaningFee > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Cleaning fee</span>
+                    <span>₹{priceCalc.cleaningFee.toLocaleString()}</span>
+                  </div>
+                )}
+                {priceCalc.serviceFee > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>Service fee</span>
+                    <span>₹{priceCalc.serviceFee.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-semibold text-gray-900 pt-2 border-t border-gray-100">
+                  <span>Total</span>
+                  <span>₹{priceCalc.total.toLocaleString()}</span>
+                </div>
               </div>
             )}
 

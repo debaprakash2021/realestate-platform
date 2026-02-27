@@ -273,8 +273,8 @@ const propertySchema = new mongoose.Schema({
     // ─── Status ───────────────────────────────────────────────────
     status: {
         type: String,
-        enum: ['active', 'inactive', 'pending', 'suspended'],
-        default: 'active'
+        enum: ['active', 'inactive', 'pending', 'suspended', 'rejected'],
+        default: 'pending'
     },
     isVerified: {
         type: Boolean,

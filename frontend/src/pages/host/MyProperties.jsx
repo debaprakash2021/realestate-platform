@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 
 export default function MyProperties() {
   const [properties, setProperties] = useState([])
-  const [loading, setLoading]       = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     api.get('/properties/host/my-properties')
@@ -54,13 +54,21 @@ export default function MyProperties() {
         <div className="space-y-4">
           {properties.map(p => {
             const image = p.images?.[0]?.url || p.primaryImage || 'https://placehold.co/200x150?text=No+Image'
+            const statusConfig = {
+              active: { cls: 'bg-green-100 text-green-700', label: '✅ Active' },
+              inactive: { cls: 'bg-gray-100 text-gray-600', label: 'Inactive' },
+              suspended: { cls: 'bg-red-100 text-red-700', label: '🚫 Suspended' },
+              pending: { cls: 'bg-amber-100 text-amber-700', label: '⏳ Pending Review' },
+              rejected: { cls: 'bg-red-100 text-red-600', label: '❌ Rejected' },
+            }
+            const stConf = statusConfig[p.status] || statusConfig.inactive
             return (
               <div key={p._id} className="card flex flex-col sm:flex-row overflow-hidden group">
                 <div className="relative w-full sm:w-48 h-40 sm:h-auto shrink-0">
                   <img src={image} alt={p.title} className="w-full h-full object-cover"
                     onError={e => e.target.src = 'https://placehold.co/200x150?text=No+Image'} />
-                  <span className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-medium ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                    {p.status}
+                  <span className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-medium ${stConf.cls}`}>
+                    {stConf.label}
                   </span>
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">

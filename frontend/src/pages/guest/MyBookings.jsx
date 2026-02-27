@@ -1,29 +1,33 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, AlertCircle, Star, CreditCard } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import ReviewForm from '../../components/common/ReviewForm'
 
 const STATUS_STYLES = {
-  pending:   { cls: 'bg-yellow-100 text-yellow-700',  icon: <Clock size={14} /> },
-  confirmed: { cls: 'bg-blue-100 text-blue-700',      icon: <CheckCircle size={14} /> },
-  completed: { cls: 'bg-green-100 text-green-700',    icon: <CheckCircle size={14} /> },
-  cancelled: { cls: 'bg-red-100 text-red-700',        icon: <XCircle size={14} /> },
-  rejected:  { cls: 'bg-gray-100 text-gray-700',      icon: <AlertCircle size={14} /> }
+  pending: { cls: 'bg-yellow-100 text-yellow-700', icon: <Clock size={14} /> },
+  confirmed: { cls: 'bg-blue-100 text-blue-700', icon: <CheckCircle size={14} /> },
+  completed: { cls: 'bg-green-100 text-green-700', icon: <CheckCircle size={14} /> },
+  cancelled: { cls: 'bg-red-100 text-red-700', icon: <XCircle size={14} /> },
+  rejected: { cls: 'bg-gray-100 text-gray-700', icon: <AlertCircle size={14} /> }
+}
+
+const PAYMENT_BADGE = {
+  pending: { cls: 'bg-yellow-100 text-yellow-700', label: '⏳ Unpaid' },
+  held: { cls: 'bg-blue-100 text-blue-700', label: '💰 In Escrow' },
+  pay_on_arrival: { cls: 'bg-orange-100 text-orange-700', label: '🏠 On Arrival' },
+  released: { cls: 'bg-green-100 text-green-700', label: '✅ Released' },
+  refunded: { cls: 'bg-red-100 text-red-700', label: '↩ Refunded' }
 }
 
 export default function MyBookings() {
-  const [bookings, setBookings]           = useState([])
-  const [loading, setLoading]             = useState(true)
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
   const [reviewBooking, setReviewBooking] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    // FIX #11: The Booking model has a `hasReview` boolean field that is set to true
-    // by reviewService when a review is submitted. We must use this server value as the
-    // authoritative source — not local optimistic state alone. Without this, after
-    // logout/login the "Leave Review" button reappears for already-reviewed bookings
-    // because the local state resets. The field is now seeded directly from the API.
     api.get('/bookings/my-bookings')
       .then(r => setBookings(r.data.data?.bookings || r.data.data || []))
       .catch(() => toast.error('Failed to load bookings'))
@@ -42,7 +46,6 @@ export default function MyBookings() {
   }
 
   const handleReviewSubmitted = (bookingId) => {
-    // Update local state immediately so UI is responsive
     setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, hasReview: true } : b))
   }
 
@@ -69,7 +72,9 @@ export default function MyBookings() {
         <div className="space-y-4">
           {bookings.map(b => {
             const status = STATUS_STYLES[b.status] || STATUS_STYLES.pending
-            const image  = b.property?.images?.[0]?.url || b.property?.primaryImage || 'https://placehold.co/200x150?text=No+Image'
+            const image = b.property?.images?.[0]?.url || b.property?.primaryImage || 'https://placehold.co/200x150?text=No+Image'
+            const payBadge = b.payment?.status ? PAYMENT_BADGE[b.payment.status] : null
+            const needsPayment = b.status === 'confirmed' && b.payment?.status === 'pending'
             return (
               <div key={b._id} className="card flex flex-col sm:flex-row overflow-hidden">
                 <img
@@ -98,14 +103,30 @@ export default function MyBookings() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-4">
-                    <span className="font-semibold text-gray-900">₹{b.pricing?.totalAmount?.toLocaleString()}</span>
+                    {/* Price + Payment Status */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-gray-900">₹{b.pricing?.totalAmount?.toLocaleString()}</span>
+                      {payBadge && (
+                        <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${payBadge.cls}`}>
+                          <CreditCard size={11} /> {payBadge.label}
+                        </span>
+                      )}
+                    </div>
+                    {/* Actions */}
                     <div className="flex items-center gap-3">
+                      {needsPayment && (
+                        <button
+                          onClick={() => navigate(`/payment/${b._id}`)}
+                          className="text-xs bg-rose-500 text-white px-3 py-1 rounded-full hover:bg-rose-600 font-medium"
+                        >
+                          Pay Now
+                        </button>
+                      )}
                       {(b.status === 'pending' || b.status === 'confirmed') && (
                         <button onClick={() => handleCancel(b._id)} className="text-sm text-red-500 hover:text-red-700 font-medium">
                           Cancel
                         </button>
                       )}
-                      {/* hasReview comes from DB — persists across login/logout */}
                       {b.status === 'completed' && !b.hasReview && (
                         <button
                           onClick={() => setReviewBooking(b)}

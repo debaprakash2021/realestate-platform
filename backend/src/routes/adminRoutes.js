@@ -1,6 +1,7 @@
-const express        = require('express');
-const User           = require('../models/User');
-const Property       = require('../models/Property');
+const express = require('express');
+const User = require('../models/User');
+const Property = require('../models/Property');
+const Notification = require('../models/Notification');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 const ResponseHandler = require('../utils/responseHandler');
@@ -20,11 +21,11 @@ router.get('/users', async (req, res) => {
   try {
     const { role, search, page = 1, limit = 20, isActive } = req.query;
     const filter = {};
-    if (role)   filter.role     = role;
+    if (role) filter.role = role;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
     if (search) {
       filter.$or = [
-        { name:  { $regex: search, $options: 'i' } },
+        { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
     }
@@ -62,7 +63,7 @@ router.put('/users/:id', async (req, res) => {
   try {
     const { role, isActive } = req.body;
     const allowed = {};
-    if (role     !== undefined) allowed.role     = role;
+    if (role !== undefined) allowed.role = role;
     if (isActive !== undefined) allowed.isActive = isActive;
 
     const user = await User.findByIdAndUpdate(
@@ -100,14 +101,14 @@ router.get('/properties', async (req, res) => {
   try {
     const { status, search, page = 1, limit = 20, isVerified, isFeatured } = req.query;
     const filter = {};
-    if (status)              filter.status     = status;
+    if (status) filter.status = status;
     if (isVerified !== undefined) filter.isVerified = isVerified === 'true';
     if (isFeatured !== undefined) filter.isFeatured = isFeatured === 'true';
     if (search) {
       filter.$or = [
-        { title:             { $regex: search, $options: 'i' } },
-        { 'location.city':   { $regex: search, $options: 'i' } },
-        { 'location.country':{ $regex: search, $options: 'i' } }
+        { title: { $regex: search, $options: 'i' } },
+        { 'location.city': { $regex: search, $options: 'i' } },
+        { 'location.country': { $regex: search, $options: 'i' } }
       ];
     }
     const skip = (Number(page) - 1) * Number(limit);
@@ -161,13 +162,13 @@ router.put('/properties/:id/feature', async (req, res) => {
   }
 });
 
-// PUT /api/admin/properties/:id/status  — change status (active/inactive/suspended)
+// PUT /api/admin/properties/:id/status  — change status (active/inactive/suspended/pending/rejected)
 router.put('/properties/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    const allowed = ['active', 'inactive', 'suspended'];
+    const allowed = ['active', 'inactive', 'suspended', 'pending', 'rejected'];
     if (!allowed.includes(status)) {
-      return ResponseHandler.error(res, 'Invalid status. Must be: active, inactive, or suspended', 400);
+      return ResponseHandler.error(res, 'Invalid status. Must be: active, inactive, suspended, pending, or rejected', 400);
     }
     const property = await Property.findByIdAndUpdate(
       req.params.id,
@@ -176,6 +177,57 @@ router.put('/properties/:id/status', async (req, res) => {
     ).populate('host', 'name email');
     if (!property) return ResponseHandler.error(res, 'Property not found', 404);
     return ResponseHandler.success(res, property, `Property status set to ${status}`);
+  } catch (err) {
+    return ResponseHandler.error(res, err.message, 400);
+  }
+});
+
+// PUT /api/admin/properties/:id/approve  — approve a pending listing
+router.put('/properties/:id/approve', async (req, res) => {
+  try {
+    const property = await Property.findByIdAndUpdate(
+      req.params.id,
+      { status: 'active' },
+      { new: true }
+    ).populate('host', 'name email _id');
+    if (!property) return ResponseHandler.error(res, 'Property not found', 404);
+
+    // Notify the host
+    await Notification.create({
+      user: property.host._id,
+      type: 'property_approved',
+      title: '🎉 Property Approved!',
+      message: `Your property "${property.title}" has been approved and is now live on the platform.`,
+      data: { propertyId: property._id }
+    });
+
+    return ResponseHandler.success(res, property, 'Property approved and now live');
+  } catch (err) {
+    return ResponseHandler.error(res, err.message, 400);
+  }
+});
+
+// PUT /api/admin/properties/:id/reject  — reject a pending listing
+router.put('/properties/:id/reject', async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const property = await Property.findByIdAndUpdate(
+      req.params.id,
+      { status: 'rejected' },
+      { new: true }
+    ).populate('host', 'name email _id');
+    if (!property) return ResponseHandler.error(res, 'Property not found', 404);
+
+    // Notify the host
+    await Notification.create({
+      user: property.host._id,
+      type: 'booking_cancelled',
+      title: '❌ Property Rejected',
+      message: `Your property "${property.title}" was not approved.${reason ? ' Reason: ' + reason : ''} Please review and resubmit.`,
+      data: { propertyId: property._id }
+    });
+
+    return ResponseHandler.success(res, property, 'Property rejected');
   } catch (err) {
     return ResponseHandler.error(res, err.message, 400);
   }

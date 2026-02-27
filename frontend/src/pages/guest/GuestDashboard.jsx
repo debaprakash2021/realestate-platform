@@ -6,48 +6,48 @@ import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
 const STATUS_STYLES = {
-  pending:        { cls: 'bg-yellow-100 text-yellow-700', icon: <Clock size={13} /> },
-  confirmed:      { cls: 'bg-blue-100 text-blue-700',    icon: <CheckCircle size={13} /> },
-  completed:      { cls: 'bg-green-100 text-green-700',  icon: <CheckCircle size={13} /> },
-  cancelled:      { cls: 'bg-red-100 text-red-700',      icon: <XCircle size={13} /> },
-  rejected:       { cls: 'bg-gray-100 text-gray-600',    icon: <AlertCircle size={13} /> }
+  pending: { cls: 'bg-yellow-100 text-yellow-700', icon: <Clock size={13} /> },
+  confirmed: { cls: 'bg-blue-100 text-blue-700', icon: <CheckCircle size={13} /> },
+  completed: { cls: 'bg-green-100 text-green-700', icon: <CheckCircle size={13} /> },
+  cancelled: { cls: 'bg-red-100 text-red-700', icon: <XCircle size={13} /> },
+  rejected: { cls: 'bg-gray-100 text-gray-600', icon: <AlertCircle size={13} /> }
 }
 
 const PAYMENT_STYLES = {
-  pending:        'bg-yellow-100 text-yellow-700',
-  paid:           'bg-green-100 text-green-700',
+  pending: 'bg-yellow-100 text-yellow-700',
+  paid: 'bg-green-100 text-green-700',
   pay_on_arrival: 'bg-orange-100 text-orange-700',
-  refunded:       'bg-red-100 text-red-700',
-  held:           'bg-blue-100 text-blue-700'
+  refunded: 'bg-red-100 text-red-700',
+  held: 'bg-blue-100 text-blue-700'
 }
 
 export default function GuestDashboard() {
-  const { user }            = useAuth()
-  const navigate            = useNavigate()
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [bookings, setBookings] = useState([])
   const [payments, setPayments] = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       try {
         const [bkRes, pmRes] = await Promise.all([
-          api.get('/bookings/my-bookings?limit=5'),
+          api.get('/bookings/my-bookings?limit=100'),
           api.get('/payments/my-payments')
         ])
         setBookings(bkRes.data.data?.bookings || [])
         setPayments(pmRes.data.data || [])
       } catch { toast.error('Failed to load dashboard') }
-      finally  { setLoading(false) }
+      finally { setLoading(false) }
     }
     load()
   }, [])
 
   // Stats
-  const totalSpent    = payments.filter(p => ['held','released','pay_on_arrival'].includes(p.status)).reduce((s, p) => s + p.amount.total, 0)
+  const totalSpent = payments.filter(p => ['held', 'released', 'pay_on_arrival'].includes(p.status)).reduce((s, p) => s + p.amount.total, 0)
   const totalBookings = bookings.length
-  const upcoming      = bookings.filter(b => b.status === 'confirmed' && new Date(b.checkIn) > new Date()).length
-  const completed     = bookings.filter(b => b.status === 'completed').length
+  const upcoming = bookings.filter(b => b.status === 'confirmed' && new Date(b.checkIn) > new Date()).length
+  const completed = bookings.filter(b => b.status === 'completed').length
 
   if (loading) return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -72,10 +72,10 @@ export default function GuestDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: <Calendar size={20} />, label: 'Total Bookings',  value: totalBookings, color: 'blue' },
-          { icon: <CheckCircle size={20} />, label: 'Upcoming Stays', value: upcoming,   color: 'green' },
-          { icon: <Star size={20} />, label: 'Completed Stays',       value: completed,   color: 'yellow' },
-          { icon: <CreditCard size={20} />, label: 'Total Spent',     value: `₹${totalSpent.toLocaleString()}`, color: 'rose' }
+          { icon: <Calendar size={20} />, label: 'Total Bookings', value: totalBookings, color: 'blue' },
+          { icon: <CheckCircle size={20} />, label: 'Upcoming Stays', value: upcoming, color: 'green' },
+          { icon: <Star size={20} />, label: 'Completed Stays', value: completed, color: 'yellow' },
+          { icon: <CreditCard size={20} />, label: 'Total Spent', value: `₹${totalSpent.toLocaleString()}`, color: 'rose' }
         ].map((s, i) => (
           <div key={i} className="card p-4">
             <div className={`w-9 h-9 bg-${s.color}-100 rounded-xl flex items-center justify-center mb-3`}>
@@ -107,7 +107,7 @@ export default function GuestDashboard() {
           ) : (
             <div className="space-y-3">
               {bookings.slice(0, 4).map(b => {
-                const st    = STATUS_STYLES[b.status] || STATUS_STYLES.pending
+                const st = STATUS_STYLES[b.status] || STATUS_STYLES.pending
                 const image = b.property?.images?.[0]?.url || b.property?.primaryImage || 'https://placehold.co/50x50?text=🏠'
                 const needsPayment = b.status === 'confirmed' && b.payment?.status === 'pending'
                 return (
@@ -183,10 +183,10 @@ export default function GuestDashboard() {
       {/* Quick Actions */}
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { icon: '🏠', label: 'Explore',    to: '/' },
-          { icon: '📅', label: 'Bookings',   to: '/my-bookings' },
-          { icon: '❤️', label: 'Favorites',  to: '/favorites' },
-          { icon: '💬', label: 'Messages',   to: '/messages' }
+          { icon: '🏠', label: 'Explore', to: '/' },
+          { icon: '📅', label: 'Bookings', to: '/my-bookings' },
+          { icon: '❤️', label: 'Favorites', to: '/favorites' },
+          { icon: '💬', label: 'Messages', to: '/messages' }
         ].map(a => (
           <Link key={a.to} to={a.to}
             className="card p-4 text-center hover:border-rose-200 hover:bg-rose-50/50 transition-colors border border-transparent">
