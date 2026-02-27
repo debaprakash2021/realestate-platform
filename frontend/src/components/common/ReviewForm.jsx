@@ -23,7 +23,7 @@ const StarRating = ({ value, onChange }) => (
       >
         <Star
           size={20}
-          className={n <= value ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+          className={n <= value ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'}
         />
       </button>
     ))}
@@ -56,22 +56,22 @@ export default function ReviewForm({ booking, onClose, onSubmitted }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700/50">
           <div>
             <h2 className="text-lg font-bold">Leave a Review</h2>
-            <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{booking.property?.title}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{booking.property?.title}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={20} className="text-gray-500" />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
+            <X size={20} className="text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Overall Rating */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Overall Rating *</label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Overall Rating *</label>
             <StarRating value={ratings.overall} onChange={v => setRating('overall', v)} />
           </div>
 
@@ -79,7 +79,7 @@ export default function ReviewForm({ booking, onClose, onSubmitted }) {
           <div className="grid grid-cols-2 gap-4">
             {CATEGORIES.map(({ key, label }) => (
               <div key={key}>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
                 <StarRating value={ratings[key]} onChange={v => setRating(key, v)} />
               </div>
             ))}
@@ -87,8 +87,8 @@ export default function ReviewForm({ booking, onClose, onSubmitted }) {
 
           {/* Comment */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Your Review * <span className="text-gray-400 font-normal text-xs">(min 10 characters)</span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              Your Review * <span className="text-gray-400 dark:text-gray-500 font-normal text-xs">(min 10 characters)</span>
             </label>
             <textarea
               rows={4}
@@ -99,7 +99,7 @@ export default function ReviewForm({ booking, onClose, onSubmitted }) {
               minLength={10}
               maxLength={1000}
             />
-            <p className="text-xs text-gray-400 mt-1 text-right">{comment.length}/1000</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">{comment.length}/1000</p>
           </div>
 
           <div className="flex gap-3 pt-2">

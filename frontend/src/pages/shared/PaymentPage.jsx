@@ -145,15 +145,15 @@ export default function PaymentPage() {
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle size={40} className="text-green-500" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           {method === 'pay_on_arrival' ? 'Booking Confirmed!' : 'Payment Successful!'}
         </h1>
-        <p className="text-gray-500 mb-2">
+        <p className="text-gray-500 dark:text-gray-400 mb-2">
           {method === 'pay_on_arrival'
             ? `Pay ₹${finalAmount.toLocaleString()} at check-in (includes ₹300 surcharge)`
             : `₹${finalAmount.toLocaleString()} paid successfully`}
         </p>
-        <p className="text-sm text-gray-400 mb-8">The host has been notified of your booking & payment.</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mb-8">The host has been notified of your booking & payment.</p>
         <div className="flex gap-3 justify-center">
           <button onClick={() => navigate('/my-bookings')} className="btn-primary px-8">View My Bookings</button>
           <button onClick={() => navigate('/')} className="btn-secondary">Back to Home</button>
@@ -164,12 +164,12 @@ export default function PaymentPage() {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-8">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-800 mb-6 text-sm">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:text-gray-100 mb-6 text-sm">
         <ArrowLeft size={18} /> Back
       </button>
 
       <h1 className="text-2xl font-bold mb-2">Complete Payment</h1>
-      <p className="text-gray-500 text-sm mb-8">Choose how you'd like to pay for your stay</p>
+      <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">Choose how you'd like to pay for your stay</p>
 
       {/* Booking Summary */}
       {booking && (
@@ -180,16 +180,16 @@ export default function PaymentPage() {
             className="w-16 h-16 rounded-lg object-cover shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-gray-900 truncate">{booking.property?.title}</p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{booking.property?.title}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {new Date(booking.checkIn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} →{' '}
               {new Date(booking.checkOut).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
             </p>
-            <p className="text-xs text-gray-500">{booking.nights} nights · {booking.guests?.total} guest{booking.guests?.total > 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{booking.nights} nights · {booking.guests?.total} guest{booking.guests?.total > 1 ? 's' : ''}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="font-bold text-gray-900">₹{totalAmount.toLocaleString()}</p>
-            <p className="text-xs text-gray-400">base total</p>
+            <p className="font-bold text-gray-900 dark:text-white">₹{totalAmount.toLocaleString()}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">base total</p>
           </div>
         </div>
       )}
@@ -199,14 +199,14 @@ export default function PaymentPage() {
         {METHODS.map(m => (
           <button key={m.id} onClick={() => setMethod(m.id)}
             className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-              method === m.id ? 'border-rose-500 bg-rose-50' : 'border-gray-200 bg-white hover:border-gray-300'
+              method === m.id ? 'border-rose-500 bg-rose-50' : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-500'
             }`}>
-            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700/50 rounded-xl flex items-center justify-center shrink-0">
               {m.icon}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium text-sm text-gray-900">{m.label}</p>
+                <p className="font-medium text-sm text-gray-900 dark:text-white">{m.label}</p>
                 {m.badge && (
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                     m.id === 'pay_on_arrival' ? 'bg-orange-100 text-orange-600' : 'bg-rose-100 text-rose-600'
@@ -215,12 +215,12 @@ export default function PaymentPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">{m.subLabel}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.subLabel}</p>
             </div>
             <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center ${
-              method === m.id ? 'border-rose-500 bg-rose-500' : 'border-gray-300'
+              method === m.id ? 'border-rose-500 bg-rose-500' : 'border-gray-300 dark:border-gray-600'
             }`}>
-              {method === m.id && <div className="w-2 h-2 bg-white rounded-full" />}
+              {method === m.id && <div className="w-2 h-2 bg-white dark:bg-gray-900 rounded-full" />}
             </div>
           </button>
         ))}
@@ -239,20 +239,20 @@ export default function PaymentPage() {
 
       {/* Price Breakdown */}
       <div className="card p-5 mb-6">
-        <h3 className="font-semibold text-sm mb-4 text-gray-700">Price Breakdown</h3>
+        <h3 className="font-semibold text-sm mb-4 text-gray-700 dark:text-gray-200">Price Breakdown</h3>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between text-gray-600">
+          <div className="flex justify-between text-gray-600 dark:text-gray-400">
             <span>₹{booking?.pricing?.basePrice?.toLocaleString()} × {booking?.nights} nights</span>
             <span>₹{booking?.pricing?.subtotal?.toLocaleString()}</span>
           </div>
           {booking?.pricing?.cleaningFee > 0 && (
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Cleaning fee</span>
               <span>₹{booking.pricing.cleaningFee}</span>
             </div>
           )}
           {booking?.pricing?.serviceFee > 0 && (
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-gray-600 dark:text-gray-400">
               <span>Service fee</span>
               <span>₹{booking.pricing.serviceFee}</span>
             </div>
@@ -263,7 +263,7 @@ export default function PaymentPage() {
               <span>+₹{surcharge}</span>
             </div>
           )}
-          <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-gray-900">
+          <div className="border-t border-gray-100 dark:border-gray-700/50 pt-2 flex justify-between font-bold text-gray-900 dark:text-white">
             <span>Total</span>
             <span>₹{finalAmount.toLocaleString()}</span>
           </div>
@@ -271,7 +271,7 @@ export default function PaymentPage() {
       </div>
 
       {/* Security Badge */}
-      <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
+      <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-6">
         <ShieldCheck size={15} className="text-green-500" />
         <span>Your payment is secured with 256-bit SSL encryption. Powered by Razorpay.</span>
       </div>

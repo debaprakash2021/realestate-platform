@@ -119,12 +119,12 @@ export default function EditProperty() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-      <button onClick={() => navigate('/host/properties')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm">
+      <button onClick={() => navigate('/host/properties')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-white mb-6 text-sm">
         <ArrowLeft size={18} /> Back to Properties
       </button>
 
       <h1 className="text-2xl font-bold mb-2">Edit Property</h1>
-      <p className="text-gray-500 text-sm mb-8">Update your property details</p>
+      <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">Update your property details</p>
 
       {/* Step Indicator */}
       <div className="flex items-center justify-between mb-8">
@@ -132,11 +132,11 @@ export default function EditProperty() {
           <div key={i} className="flex items-center">
             <button onClick={() => setStep(i)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                i === step ? 'bg-rose-500 text-white' : i < step ? 'bg-rose-100 text-rose-600' : 'bg-gray-100 text-gray-500'
+                i === step ? 'bg-rose-500 text-white' : i < step ? 'bg-rose-100 text-rose-600' : 'bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400'
               }`}>
               {stepIcons[i]} <span className="hidden sm:inline">{s}</span>
             </button>
-            {i < steps.length - 1 && <div className={`h-0.5 w-4 sm:w-8 mx-1 ${i < step ? 'bg-rose-300' : 'bg-gray-200'}`} />}
+            {i < steps.length - 1 && <div className={`h-0.5 w-4 sm:w-8 mx-1 ${i < step ? 'bg-rose-300' : 'bg-gray-200 dark:bg-gray-700'}`} />}
           </div>
         ))}
       </div>
@@ -146,11 +146,11 @@ export default function EditProperty() {
         {/* Step 0 — Basic Info */}
         {step === 0 && (
           <div className="space-y-4">
-            <h2 className="font-semibold text-gray-700 mb-4">Basic Information</h2>
+            <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-4">Basic Information</h2>
 
             {/* Images */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Property Images</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Property Images</label>
               {form.images.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {form.images.map(img => (
@@ -169,7 +169,7 @@ export default function EditProperty() {
                   ))}
                 </div>
               )}
-              <label className={`flex items-center gap-2 border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:border-rose-400 transition-colors text-sm text-gray-500 ${uploadLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+              <label className={`flex items-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 cursor-pointer hover:border-rose-400 transition-colors text-sm text-gray-500 dark:text-gray-400 ${uploadLoading ? 'opacity-50 pointer-events-none' : ''}`}>
                 <Upload size={16} />
                 {uploadLoading ? 'Uploading...' : 'Upload more images (up to 10)'}
                 <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
@@ -177,22 +177,22 @@ export default function EditProperty() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Property Title *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Property Title *</label>
               <input type="text" className="input-field" value={form.title} onChange={e => set('title', e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Description *</label>
               <textarea rows={4} className="input-field resize-none" value={form.description} onChange={e => set('description', e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Property Type</label>
                 <select className="input-field" value={form.propertyType} onChange={e => set('propertyType', e.target.value)}>
                   {['apartment','house','villa','cabin','cottage','studio','hostel'].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Status</label>
                 <select className="input-field" value={form.status} onChange={e => set('status', e.target.value)}>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive (Hidden)</option>
@@ -205,28 +205,28 @@ export default function EditProperty() {
         {/* Step 1 — Location */}
         {step === 1 && (
           <div className="space-y-4">
-            <h2 className="font-semibold text-gray-700 mb-4">Location</h2>
+            <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-4">Location</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Street Address</label>
               <input type="text" className="input-field" value={form.location.address} onChange={e => setNested('location', 'address', e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">City</label>
                 <input type="text" className="input-field" value={form.location.city} onChange={e => setNested('location', 'city', e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">State</label>
                 <input type="text" className="input-field" value={form.location.state} onChange={e => setNested('location', 'state', e.target.value)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Country</label>
                 <input type="text" className="input-field" value={form.location.country} onChange={e => setNested('location', 'country', e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">ZIP Code</label>
                 <input type="text" className="input-field" value={form.location.zipCode} onChange={e => setNested('location', 'zipCode', e.target.value)} />
               </div>
             </div>
@@ -236,28 +236,28 @@ export default function EditProperty() {
         {/* Step 2 — Pricing */}
         {step === 2 && (
           <div className="space-y-4">
-            <h2 className="font-semibold text-gray-700 mb-4">Pricing</h2>
+            <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-4">Pricing</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Base Price per Night (₹) *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Base Price per Night (₹) *</label>
               <input type="number" className="input-field" value={form.pricing.basePrice} onChange={e => setNested('pricing', 'basePrice', Number(e.target.value))} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cleaning Fee (₹)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Cleaning Fee (₹)</label>
                 <input type="number" className="input-field" value={form.pricing.cleaningFee} onChange={e => setNested('pricing', 'cleaningFee', Number(e.target.value))} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Service Fee (₹)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Service Fee (₹)</label>
                 <input type="number" className="input-field" value={form.pricing.serviceFee} onChange={e => setNested('pricing', 'serviceFee', Number(e.target.value))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Weekly Discount (%)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Weekly Discount (%)</label>
                 <input type="number" min="0" max="50" className="input-field" value={form.pricing.weeklyDiscount} onChange={e => setNested('pricing', 'weeklyDiscount', Number(e.target.value))} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Discount (%)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Monthly Discount (%)</label>
                 <input type="number" min="0" max="50" className="input-field" value={form.pricing.monthlyDiscount} onChange={e => setNested('pricing', 'monthlyDiscount', Number(e.target.value))} />
               </div>
             </div>
@@ -267,18 +267,18 @@ export default function EditProperty() {
         {/* Step 3 — Details */}
         {step === 3 && (
           <div className="space-y-4">
-            <h2 className="font-semibold text-gray-700 mb-4">Property Details</h2>
+            <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-4">Property Details</h2>
             <div className="grid grid-cols-2 gap-4">
               {[['bedrooms','Bedrooms'],['bathrooms','Bathrooms'],['beds','Beds'],['maxGuests','Max Guests']].map(([f, l]) => (
                 <div key={f}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{l}</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{l}</label>
                   <input type="number" min="1" className="input-field" value={form.details[f]} onChange={e => setNested('details', f, Number(e.target.value))} />
                 </div>
               ))}
             </div>
             <div className="grid grid-cols-2 gap-4 mt-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cancellation Policy</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Cancellation Policy</label>
                 <select className="input-field" value={form.cancellationPolicy} onChange={e => set('cancellationPolicy', e.target.value)}>
                   <option value="flexible">Flexible</option>
                   <option value="moderate">Moderate</option>
@@ -288,7 +288,7 @@ export default function EditProperty() {
               <div className="flex items-end pb-0.5">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" className="w-4 h-4 accent-rose-500" checked={form.instantBooking} onChange={e => set('instantBooking', e.target.checked)} />
-                  <span className="text-sm font-medium text-gray-700">⚡ Instant Booking</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">⚡ Instant Booking</span>
                 </label>
               </div>
             </div>
@@ -298,11 +298,11 @@ export default function EditProperty() {
         {/* Step 4 — Amenities */}
         {step === 4 && (
           <div>
-            <h2 className="font-semibold text-gray-700 mb-4">Amenities</h2>
+            <h2 className="font-semibold text-gray-700 dark:text-gray-200 mb-4">Amenities</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {AMENITIES.map(a => (
                 <label key={a} className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all text-sm ${
-                  form.amenities[a] ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  form.amenities[a] ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:border-gray-600'
                 }`}>
                   <input type="checkbox" className="hidden" checked={form.amenities[a]}
                     onChange={e => setForm(prev => ({ ...prev, amenities: { ...prev.amenities, [a]: e.target.checked } }))} />
@@ -314,7 +314,7 @@ export default function EditProperty() {
         )}
 
         {/* Navigation */}
-        <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
+        <div className="flex justify-between mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/50">
           {step > 0 ? (
             <button onClick={() => setStep(step - 1)} className="btn-secondary">← Back</button>
           ) : <div />}

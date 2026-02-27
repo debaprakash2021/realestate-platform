@@ -69,28 +69,28 @@ function RegistrationForm({ onSuccess }) {
           <Home size={24} className="text-white" />
         </div>
         <h1 className="text-2xl font-bold">Create an account</h1>
-        <p className="text-gray-500 mt-1">Join thousands of travelers & hosts</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">Join thousands of travelers & hosts</p>
       </div>
 
       <div className="card p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Full Name</label>
             <input type="text" required placeholder="John Doe" className="input-field"
               value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Email</label>
             <input type="email" required placeholder="you@example.com" className="input-field"
               value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPw ? 'text' : 'password'}
@@ -103,7 +103,7 @@ function RegistrationForm({ onSuccess }) {
                 onBlur={() => setPwFocused(false)}
               />
               <button type="button" onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                className="absolute right-3 top-2.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400">
                 {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
@@ -123,16 +123,16 @@ function RegistrationForm({ onSuccess }) {
 
             {/* Rules checklist — show when focused or has value */}
             {(pwFocused || form.password) && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-1.5">
+              <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-1.5">
                 {RULES.map(rule => {
                   const ok = rule.test(form.password)
                   return (
                     <div key={rule.id} className="flex items-center gap-2">
                       {ok
                         ? <CheckCircle size={13} className="text-green-500 shrink-0" />
-                        : <XCircle    size={13} className="text-gray-300 shrink-0" />
+                        : <XCircle    size={13} className="text-gray-300 dark:text-gray-600 shrink-0" />
                       }
-                      <span className={`text-xs ${ok ? 'text-green-700 line-through' : 'text-gray-500'}`}>
+                      <span className={`text-xs ${ok ? 'text-green-700 line-through' : 'text-gray-500 dark:text-gray-400'}`}>
                         {rule.label}
                       </span>
                     </div>
@@ -144,7 +144,7 @@ function RegistrationForm({ onSuccess }) {
 
           {/* Role */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">I want to</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">I want to</label>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { value: 'guest', label: '🏠 Book Stays' },
@@ -155,7 +155,7 @@ function RegistrationForm({ onSuccess }) {
                   className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
                     form.role === r.value
                       ? 'border-rose-500 bg-rose-50 text-rose-600'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:border-gray-600'
                   }`}>
                   {r.label}
                 </button>
@@ -172,7 +172,7 @@ function RegistrationForm({ onSuccess }) {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
           Already have an account?{' '}
           <Link to="/login" className="text-rose-500 font-medium hover:underline">Sign in</Link>
         </p>
@@ -271,9 +271,9 @@ function OtpVerification({ email, role, onBack }) {
           <Mail size={26} className="text-rose-500" />
         </div>
         <h1 className="text-2xl font-bold">Check your email</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
           We sent a 6-digit code to<br />
-          <span className="font-semibold text-gray-700">{email}</span>
+          <span className="font-semibold text-gray-700 dark:text-gray-200">{email}</span>
         </p>
       </div>
 
@@ -281,7 +281,7 @@ function OtpVerification({ email, role, onBack }) {
         <div className="space-y-6">
           {/* OTP Inputs */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-3 text-center">
               Enter verification code
             </label>
             <div className="flex gap-2.5 justify-center" onPaste={handlePaste}>
@@ -298,7 +298,7 @@ function OtpVerification({ email, role, onBack }) {
                   className={`w-11 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none transition-all ${
                     digit
                       ? 'border-rose-400 bg-rose-50 text-rose-600'
-                      : 'border-gray-200 bg-white text-gray-900 focus:border-rose-400'
+                      : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-rose-400'
                   }`}
                 />
               ))}
@@ -319,11 +319,11 @@ function OtpVerification({ email, role, onBack }) {
 
           {/* Resend */}
           <div className="text-center space-y-2">
-            <p className="text-sm text-gray-500">Didn't receive the code?</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Didn't receive the code?</p>
             <button
               onClick={handleResend}
               disabled={resending || cooldown > 0}
-              className="text-sm font-medium text-rose-500 hover:underline disabled:text-gray-400 disabled:no-underline"
+              className="text-sm font-medium text-rose-500 hover:underline disabled:text-gray-400 dark:text-gray-500 disabled:no-underline"
             >
               {resending
                 ? 'Sending...'
@@ -336,12 +336,12 @@ function OtpVerification({ email, role, onBack }) {
 
           {/* Back */}
           <button onClick={onBack}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mx-auto">
+            className="flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 mx-auto">
             <ArrowLeft size={14} /> Back to registration
           </button>
         </div>
 
-        <p className="text-xs text-gray-400 text-center mt-6">
+        <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-6">
           Code expires in 10 minutes. Check your spam folder if you don't see it.
         </p>
       </div>
@@ -362,7 +362,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 bg-gray-50 py-10">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 bg-gray-50 dark:bg-gray-800/50 py-10">
       <div className="w-full max-w-md">
         {step === 'form'
           ? <RegistrationForm onSuccess={handleFormSuccess} />

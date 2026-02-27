@@ -13,7 +13,7 @@ const STATUS = {
   confirmed: { cls: 'bg-blue-100 text-blue-700',      icon: <CheckCircle size={12} />,  label: 'Confirmed' },
   completed: { cls: 'bg-green-100 text-green-700',    icon: <CheckCircle size={12} />,  label: 'Completed' },
   cancelled: { cls: 'bg-red-100 text-red-700',        icon: <XCircle size={12} />,      label: 'Cancelled' },
-  rejected:  { cls: 'bg-gray-100 text-gray-600',      icon: <AlertCircle size={12} />,  label: 'Rejected'  },
+  rejected:  { cls: 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400',      icon: <AlertCircle size={12} />,  label: 'Rejected'  },
 }
 
 const PAYMENT = {
@@ -69,24 +69,24 @@ function BookingCard({ booking, onConfirm, onReject }) {
           <div className="min-w-0">
             <Link
               to={`/property/${booking.property?._id}`}
-              className="font-semibold text-sm text-gray-900 hover:text-rose-500 truncate block"
+              className="font-semibold text-sm text-gray-900 dark:text-white hover:text-rose-500 truncate block"
             >
               {booking.property?.title}
             </Link>
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5">
               <MapPin size={11} /> {booking.property?.location?.city}, {booking.property?.location?.state}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {fmt(booking.checkIn)} → {fmt(booking.checkOut)}
-              <span className="ml-1 text-gray-400">· {booking.nights} night{booking.nights > 1 ? 's' : ''}</span>
+              <span className="ml-1 text-gray-400 dark:text-gray-500">· {booking.nights} night{booking.nights > 1 ? 's' : ''}</span>
             </p>
-            <p className="text-xs text-gray-400 font-mono mt-0.5">ID: {booking._id}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">ID: {booking._id}</p>
           </div>
         </div>
 
         {/* Guest Info */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1.5">Guest</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide mb-1.5">Guest</p>
           <div className="flex items-center gap-2">
             <img
               src={booking.guest?.avatar?.url || 'https://via.placeholder.com/32'}
@@ -95,20 +95,20 @@ function BookingCard({ booking, onConfirm, onReject }) {
             />
             <div className="min-w-0">
               <p className="text-sm font-semibold truncate">{booking.guest?.name}</p>
-              <p className="text-xs text-gray-400 truncate">{booking.guest?.email}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{booking.guest?.email}</p>
               {booking.guest?.phone && (
-                <p className="text-xs text-gray-400">📞 {booking.guest.phone}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">📞 {booking.guest.phone}</p>
               )}
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-1.5">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
             👥 {booking.guests?.total} guest{booking.guests?.total > 1 ? 's' : ''}
             {booking.guests?.adults && ` (${booking.guests.adults} adult${booking.guests.adults > 1 ? 's' : ''}`}
             {booking.guests?.children > 0 && `, ${booking.guests.children} child${booking.guests.children > 1 ? 'ren' : ''}`}
             {booking.guests?.adults && ')'}
           </p>
           {booking.specialRequests && (
-            <p className="text-xs text-gray-500 mt-1 italic bg-gray-50 rounded-lg px-2 py-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic bg-gray-50 dark:bg-gray-800/50 rounded-lg px-2 py-1">
               💬 "{booking.specialRequests}"
             </p>
           )}
@@ -124,14 +124,14 @@ function BookingCard({ booking, onConfirm, onReject }) {
               {pm.label}
             </span>
           </div>
-          <p className="text-lg font-bold text-gray-900">₹{booking.pricing?.totalAmount?.toLocaleString()}</p>
-          <p className="text-xs text-gray-400">{fmt(booking.createdAt)}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">₹{booking.pricing?.totalAmount?.toLocaleString()}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{fmt(booking.createdAt)}</p>
         </div>
       </div>
 
       {/* Action Buttons — only for pending/confirmable bookings */}
       {canAct && booking.status !== 'cancelled' && booking.status !== 'rejected' && booking.status !== 'completed' && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
           {!showRejectForm ? (
             <div className="flex gap-2 flex-wrap">
               {booking.status === 'pending' && (
@@ -152,7 +152,7 @@ function BookingCard({ booking, onConfirm, onReject }) {
                 <XCircle size={15} />
                 Reject
               </button>
-              <p className="text-xs text-gray-400 self-center">
+              <p className="text-xs text-gray-400 dark:text-gray-500 self-center">
                 {booking.status === 'confirmed'
                   ? 'This booking was auto-confirmed (instant booking). You can still reject it.'
                   : 'Confirm or reject this booking request.'}
@@ -160,7 +160,7 @@ function BookingCard({ booking, onConfirm, onReject }) {
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-gray-700">Reason for rejection:</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Reason for rejection:</p>
               <textarea
                 value={rejectReason}
                 onChange={e => setRejectReason(e.target.value)}
@@ -275,7 +275,7 @@ export default function HostBookings() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Calendar size={24} className="text-rose-500" /> Booking Requests
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {total} total booking{total !== 1 ? 's' : ''} across your properties
           </p>
         </div>
@@ -296,13 +296,13 @@ export default function HostBookings() {
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
               filter === t.key
                 ? 'bg-rose-500 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-rose-300'
+                : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-rose-300'
             }`}
           >
             {t.label}
             {t.key !== 'all' && statusCounts[t.key] > 0 && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
-                filter === t.key ? 'bg-white/20' : 'bg-gray-100'
+                filter === t.key ? 'bg-white dark:bg-gray-900/20' : 'bg-gray-100 dark:bg-gray-700/50'
               }`}>
                 {statusCounts[t.key]}
               </span>
@@ -313,7 +313,7 @@ export default function HostBookings() {
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search size={16} className="absolute left-3 top-3 text-gray-400" />
+        <Search size={16} className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           placeholder="Search by guest name, property, or booking ID..."
@@ -331,10 +331,10 @@ export default function HostBookings() {
       ) : displayed.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-5xl mb-4">📋</p>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
             {search ? 'No results match your search' : `No ${filter === 'all' ? '' : filter} bookings yet`}
           </h3>
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 dark:text-gray-500 text-sm">
             {filter === 'pending'
               ? 'New booking requests will appear here'
               : 'Bookings will show up here once guests start booking your properties'}
@@ -360,8 +360,8 @@ export default function HostBookings() {
 
       {/* Pagination */}
       {!search && total > LIMIT && (
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-          <p className="text-sm text-gray-500">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/50">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Showing {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, total)} of {total}
           </p>
           <div className="flex gap-2">

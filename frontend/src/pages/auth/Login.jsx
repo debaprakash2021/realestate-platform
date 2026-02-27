@@ -81,9 +81,9 @@ function VerifyOtpPrompt({ email, onBack }) {
           <Mail size={26} className="text-rose-500" />
         </div>
         <h1 className="text-2xl font-bold">Verify your email</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           A verification code was sent to<br />
-          <span className="font-semibold text-gray-700">{email}</span>
+          <span className="font-semibold text-gray-700 dark:text-gray-200">{email}</span>
         </p>
       </div>
       <div className="card p-8 space-y-5">
@@ -94,7 +94,7 @@ function VerifyOtpPrompt({ email, onBack }) {
               onChange={e => handleChange(i, e.target.value)}
               onKeyDown={e => handleKeyDown(i, e)}
               className={`w-11 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none transition-all ${
-                digit ? 'border-rose-400 bg-rose-50 text-rose-600' : 'border-gray-200 focus:border-rose-400'
+                digit ? 'border-rose-400 bg-rose-50 text-rose-600' : 'border-gray-200 dark:border-gray-600 focus:border-rose-400'
               }`}
             />
           ))}
@@ -103,13 +103,13 @@ function VerifyOtpPrompt({ email, onBack }) {
           className="btn-primary w-full py-3 disabled:opacity-50">
           {loading ? 'Verifying...' : 'Verify & Sign in'}
         </button>
-        <div className="text-center text-sm text-gray-500">
+        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
           <button onClick={handleResend} disabled={resending || cooldown > 0}
-            className="text-rose-500 hover:underline disabled:text-gray-400">
+            className="text-rose-500 hover:underline disabled:text-gray-400 dark:text-gray-500">
             {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
           </button>
         </div>
-        <button onClick={onBack} className="text-sm text-gray-400 hover:text-gray-600 w-full text-center">
+        <button onClick={onBack} className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 w-full text-center">
           ← Back to sign in
         </button>
       </div>
@@ -128,7 +128,7 @@ export default function Login() {
 
   if (unverifiedEmail) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 bg-gray-50">
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 bg-gray-50 dark:bg-gray-800/50">
         <div className="w-full max-w-md">
           <VerifyOtpPrompt email={unverifiedEmail} onBack={() => setUnverifiedEmail(null)} />
         </div>
@@ -156,30 +156,30 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 bg-gray-50">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 bg-gray-50 dark:bg-gray-800/50">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-rose-500 rounded-xl flex items-center justify-center mx-auto mb-4">
             <Home size={24} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-gray-500 mt-1">Sign in to your account</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Sign in to your account</p>
         </div>
 
         <div className="card p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Email</label>
               <input type="email" required placeholder="you@example.com" className="input-field"
                 value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Password</label>
               <div className="relative">
                 <input type={showPw ? 'text' : 'password'} required placeholder="••••••••" className="input-field pr-10"
                   value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
                 <button type="button" onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                  className="absolute right-3 top-2.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400">
                   {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
@@ -188,7 +188,7 @@ export default function Login() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
-          <p className="text-center text-sm text-gray-500 mt-6">
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
             Don't have an account?{' '}
             <Link to="/register" className="text-rose-500 font-medium hover:underline">Sign up</Link>
           </p>

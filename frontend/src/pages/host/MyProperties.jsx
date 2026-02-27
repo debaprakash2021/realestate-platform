@@ -46,8 +46,8 @@ export default function MyProperties() {
       {properties.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-5xl mb-4">🏡</p>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No properties yet</h3>
-          <p className="text-gray-400 mb-6">List your first property to start earning</p>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">No properties yet</h3>
+          <p className="text-gray-400 dark:text-gray-500 mb-6">List your first property to start earning</p>
           <Link to="/host/properties/new" className="btn-primary">List a Property</Link>
         </div>
       ) : (
@@ -56,7 +56,7 @@ export default function MyProperties() {
             const image = p.images?.[0]?.url || p.primaryImage || 'https://placehold.co/200x150?text=No+Image'
             const statusConfig = {
               active: { cls: 'bg-green-100 text-green-700', label: '✅ Active' },
-              inactive: { cls: 'bg-gray-100 text-gray-600', label: 'Inactive' },
+              inactive: { cls: 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400', label: 'Inactive' },
               suspended: { cls: 'bg-red-100 text-red-700', label: '🚫 Suspended' },
               pending: { cls: 'bg-amber-100 text-amber-700', label: '⏳ Pending Review' },
               rejected: { cls: 'bg-red-100 text-red-600', label: '❌ Rejected' },
@@ -73,32 +73,32 @@ export default function MyProperties() {
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">{p.title}</h3>
-                    <div className="flex items-center gap-1 text-sm text-gray-500 mb-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{p.title}</h3>
+                    <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-1">
                       <MapPin size={13} /> {p.location?.city}, {p.location?.state}
                     </div>
-                    <div className="flex flex-wrap gap-3 text-sm text-gray-500">
+                    <div className="flex flex-wrap gap-3 text-sm text-gray-500 dark:text-gray-400">
                       <span>{p.details?.bedrooms} bed · {p.details?.bathrooms} bath · {p.details?.maxGuests} guests</span>
                       {p.ratings?.average > 0 && (
                         <span className="flex items-center gap-1">
-                          <Star size={13} className="fill-gray-700 text-gray-700" /> {p.ratings.average} ({p.ratings.count})
+                          <Star size={13} className="fill-gray-700 dark:fill-gray-300 text-gray-700 dark:text-gray-200" /> {p.ratings.average} ({p.ratings.count})
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-4">
-                    <span className="font-semibold text-gray-900">
-                      ₹{p.pricing?.basePrice?.toLocaleString()}<span className="text-gray-400 font-normal text-sm">/night</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      ₹{p.pricing?.basePrice?.toLocaleString()}<span className="text-gray-400 dark:text-gray-500 font-normal text-sm">/night</span>
                     </span>
                     <div className="flex items-center gap-2">
-                      <Link to={`/property/${p._id}`} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="View">
+                      <Link to={`/property/${p._id}`} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                         <Eye size={17} />
                       </Link>
                       {/* ✅ NEW: Edit button */}
-                      <Link to={`/host/properties/${p._id}/edit`} className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Edit">
+                      <Link to={`/host/properties/${p._id}/edit`} className="p-2 text-gray-400 dark:text-gray-500 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Edit">
                         <Edit size={17} />
                       </Link>
-                      <button onClick={() => handleDelete(p._id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                      <button onClick={() => handleDelete(p._id)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                         <Trash2 size={17} />
                       </button>
                     </div>

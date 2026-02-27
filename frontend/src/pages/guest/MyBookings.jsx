@@ -10,7 +10,7 @@ const STATUS_STYLES = {
   confirmed: { cls: 'bg-blue-100 text-blue-700', icon: <CheckCircle size={14} /> },
   completed: { cls: 'bg-green-100 text-green-700', icon: <CheckCircle size={14} /> },
   cancelled: { cls: 'bg-red-100 text-red-700', icon: <XCircle size={14} /> },
-  rejected: { cls: 'bg-gray-100 text-gray-700', icon: <AlertCircle size={14} /> }
+  rejected: { cls: 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200', icon: <AlertCircle size={14} /> }
 }
 
 const PAYMENT_BADGE = {
@@ -64,8 +64,8 @@ export default function MyBookings() {
       {bookings.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-5xl mb-4">📅</p>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No bookings yet</h3>
-          <p className="text-gray-400 mb-6">Start exploring properties to make your first booking</p>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">No bookings yet</h3>
+          <p className="text-gray-400 dark:text-gray-500 mb-6">Start exploring properties to make your first booking</p>
           <Link to="/" className="btn-primary">Explore Properties</Link>
         </div>
       ) : (
@@ -86,26 +86,26 @@ export default function MyBookings() {
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <Link to={`/property/${b.property?._id}`} className="font-semibold text-gray-900 hover:text-rose-500 transition-colors">
+                      <Link to={`/property/${b.property?._id}`} className="font-semibold text-gray-900 dark:text-white hover:text-rose-500 transition-colors">
                         {b.property?.title}
                       </Link>
                       <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium shrink-0 ${status.cls}`}>
                         {status.icon} {b.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-500 mb-1">
+                    <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-1">
                       <MapPin size={13} /> {b.property?.location?.city}, {b.property?.location?.state}
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                    <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                       <Calendar size={13} />
                       {new Date(b.checkIn).toLocaleDateString()} → {new Date(b.checkOut).toLocaleDateString()}
-                      <span className="ml-1 text-gray-400">({b.nights} nights)</span>
+                      <span className="ml-1 text-gray-400 dark:text-gray-500">({b.nights} nights)</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-4">
                     {/* Price + Payment Status */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-gray-900">₹{b.pricing?.totalAmount?.toLocaleString()}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">₹{b.pricing?.totalAmount?.toLocaleString()}</span>
                       {payBadge && (
                         <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${payBadge.cls}`}>
                           <CreditCard size={11} /> {payBadge.label}

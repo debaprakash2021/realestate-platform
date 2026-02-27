@@ -92,7 +92,7 @@ export default function NotificationsPanel() {
       {/* Bell Button */}
       <button
         onClick={handleToggle}
-        className="relative p-2 rounded-lg text-gray-600 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+        className="relative p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
         title="Notifications"
       >
         <Bell size={20} />
@@ -105,16 +105,16 @@ export default function NotificationsPanel() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+        <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700/50 z-50 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <h3 className="font-semibold text-sm text-gray-900">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700/50">
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
               Notifications {unread > 0 && <span className="text-rose-500 ml-1">({unread} new)</span>}
             </h3>
             {unread > 0 && (
               <button
                 onClick={markAllRead}
-                className="flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-rose-500 transition-colors"
               >
                 <CheckCheck size={14} /> Mark all read
               </button>
@@ -122,14 +122,14 @@ export default function NotificationsPanel() {
           </div>
 
           {/* List */}
-          <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
+          <div className="max-h-96 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
             {loading ? (
-              <div className="p-6 text-center text-sm text-gray-400">Loading...</div>
+              <div className="p-6 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <Bell size={32} className="mx-auto text-gray-200 mb-2" />
-                <p className="text-sm text-gray-400">No notifications yet</p>
-                <p className="text-xs text-gray-300 mt-1">We'll notify you about bookings, messages & more</p>
+                <Bell size={32} className="mx-auto text-gray-200 dark:text-gray-700 mb-2" />
+                <p className="text-sm text-gray-400 dark:text-gray-500">No notifications yet</p>
+                <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">We'll notify you about bookings, messages & more</p>
               </div>
             ) : notifications.map(n => (
               // FIX #6: Added 'group' class to this div.
@@ -138,15 +138,15 @@ export default function NotificationsPanel() {
               <div
                 key={n._id}
                 onClick={() => !n.isRead && markRead(n._id)}
-                className={`group flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${!n.isRead ? 'bg-rose-50/50' : ''}`}
+                className={`group flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${!n.isRead ? 'bg-rose-50/50' : ''}`}
               >
                 <div className="text-xl shrink-0 mt-0.5">{TYPE_ICON[n.type] || TYPE_ICON.default}</div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm leading-snug ${!n.isRead ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                  <p className={`text-sm leading-snug ${!n.isRead ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}`}>
                     {n.title}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                  <p className="text-xs text-gray-400 mt-1">{new Date(n.createdAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{n.message}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{new Date(n.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {!n.isRead && (
@@ -154,7 +154,7 @@ export default function NotificationsPanel() {
                   )}
                   <button
                     onClick={(e) => deleteNotif(n._id, e)}
-                    className="p-1 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1 text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                     title="Delete"
                   >
                     <Trash2 size={13} />

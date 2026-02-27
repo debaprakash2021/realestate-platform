@@ -8,7 +8,7 @@ const STATUS_STYLES = {
   confirmed: 'bg-blue-100 text-blue-700',
   completed: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-700',
-  rejected:  'bg-gray-100 text-gray-600'
+  rejected:  'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400'
 }
 
 const PAYMENT_LABELS = {
@@ -25,8 +25,8 @@ const StatCard = ({ icon, label, value, color = 'rose' }) => (
     <div className={`w-10 h-10 bg-${color}-100 rounded-xl flex items-center justify-center mb-3`}>
       <span className={`text-${color}-500`}>{icon}</span>
     </div>
-    <p className="text-2xl font-bold text-gray-900">{value}</p>
-    <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+    <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
   </div>
 )
 
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
     const pm  = PAYMENT_LABELS[b.payment?.status] || PAYMENT_LABELS.pending
     const img = b.property?.images?.[0]?.url || 'https://placehold.co/48x48?text=🏠'
     return (
-      <div className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50 transition-colors">
+      <div className="border border-gray-100 dark:border-gray-700/50 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Property */}
           <div className="flex gap-3 min-w-0 flex-1">
@@ -92,34 +92,34 @@ export default function AdminDashboard() {
               onError={e => e.target.src='https://placehold.co/48x48?text=🏠'} />
             <div className="min-w-0">
               <p className="font-semibold text-sm truncate">{b.property?.title}</p>
-              <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5">
                 <MapPin size={11} /> {b.property?.location?.city}
               </p>
-              <p className="text-xs text-gray-500">{fmt(b.checkIn)} → {fmt(b.checkOut)} · {b.nights}n</p>
-              <p className="text-xs text-gray-300 font-mono mt-0.5">ID: {b._id}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{fmt(b.checkIn)} → {fmt(b.checkOut)} · {b.nights}n</p>
+              <p className="text-xs text-gray-300 dark:text-gray-600 font-mono mt-0.5">ID: {b._id}</p>
             </div>
           </div>
 
           {/* Guest + Host */}
           <div className="flex gap-4 flex-1">
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Guest</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide mb-1">Guest</p>
               <p className="text-sm font-semibold truncate">{b.guest?.name}</p>
-              <p className="text-xs text-gray-400 truncate">{b.guest?.email}</p>
-              {b.guest?.phone && <p className="text-xs text-gray-400">📞 {b.guest.phone}</p>}
-              <p className="text-xs text-gray-300 font-mono">UID: {b.guest?._id}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{b.guest?.email}</p>
+              {b.guest?.phone && <p className="text-xs text-gray-400 dark:text-gray-500">📞 {b.guest.phone}</p>}
+              <p className="text-xs text-gray-300 dark:text-gray-600 font-mono">UID: {b.guest?._id}</p>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Host</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide mb-1">Host</p>
               <p className="text-sm font-semibold truncate">{b.host?.name}</p>
-              <p className="text-xs text-gray-400 truncate">{b.host?.email}</p>
-              <p className="text-xs text-gray-300 font-mono">UID: {b.host?._id}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{b.host?.email}</p>
+              <p className="text-xs text-gray-300 dark:text-gray-600 font-mono">UID: {b.host?._id}</p>
             </div>
           </div>
 
           {/* Status + Payment */}
           <div className="flex flex-row sm:flex-col items-start sm:items-end gap-2 shrink-0">
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_STYLES[b.status] || 'bg-gray-100 text-gray-600'}`}>
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_STYLES[b.status] || 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400'}`}>
               {b.status}
             </span>
             <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${pm.cls}`}>{pm.label}</span>
@@ -142,7 +142,7 @@ export default function AdminDashboard() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold flex items-center gap-2">🛡️ Admin Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Full platform overview — users, bookings, payments</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Full platform overview — users, bookings, payments</p>
       </div>
 
       {/* Platform Stats */}
@@ -163,13 +163,13 @@ export default function AdminDashboard() {
             <select
               value={searchType}
               onChange={e => setSearchType(e.target.value)}
-              className="input-field pr-8 appearance-none text-sm w-full sm:w-44 bg-white"
+              className="input-field pr-8 appearance-none text-sm w-full sm:w-44 bg-white dark:bg-gray-900"
             >
               <option value="bookingId">By Booking ID</option>
               <option value="guestId">By Guest User ID</option>
               <option value="hostId">By Host User ID</option>
             </select>
-            <ChevronDown size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+            <ChevronDown size={14} className="absolute right-3 top-3 text-gray-400 dark:text-gray-500 pointer-events-none" />
           </div>
           <input
             type="text"
@@ -190,9 +190,9 @@ export default function AdminDashboard() {
         {/* Search Results */}
         {searchResults !== null && (
           <div className="mt-5">
-            <p className="text-xs text-gray-500 mb-3">{searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found</p>
             {searchResults.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">No bookings match your search</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">No bookings match your search</p>
             ) : (
               <div className="space-y-3">
                 {searchResults.map(b => <BookingRow key={b._id} b={b} />)}
@@ -206,10 +206,10 @@ export default function AdminDashboard() {
       <div className="card p-6 mb-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-sm flex items-center gap-2"><Calendar size={17} className="text-rose-500" /> All Recent Bookings</h2>
-          <span className="text-xs text-gray-400">Last 10</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">Last 10</span>
         </div>
         {bookings.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-8">No bookings yet</p>
+          <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">No bookings yet</p>
         ) : (
           <div className="space-y-3">
             {bookings.map(b => <BookingRow key={b._id} b={b} />)}
@@ -221,15 +221,15 @@ export default function AdminDashboard() {
       <div className="card p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-sm flex items-center gap-2"><DollarSign size={17} className="text-rose-500" /> All Recent Payments</h2>
-          <span className="text-xs text-gray-400">Last 10</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">Last 10</span>
         </div>
         {payments.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-8">No payments yet</p>
+          <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">No payments yet</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wide text-left">
+                <tr className="border-b border-gray-100 dark:border-gray-700/50 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide text-left">
                   <th className="pb-3 font-medium">Guest</th>
                   <th className="pb-3 font-medium">Host</th>
                   <th className="pb-3 font-medium text-center">Method</th>
@@ -238,21 +238,21 @@ export default function AdminDashboard() {
                   <th className="pb-3 font-medium text-right">Platform Fee</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
                 {payments.map(p => {
                   const pm = PAYMENT_LABELS[p.status] || PAYMENT_LABELS.pending
                   return (
-                    <tr key={p._id} className="hover:bg-gray-50">
+                    <tr key={p._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="py-3">
                         <p className="font-medium truncate max-w-[120px]">{p.guest?.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{p.guest?.email}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{p.guest?.email}</p>
                       </td>
                       <td className="py-3">
                         <p className="font-medium truncate max-w-[120px]">{p.host?.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{p.host?.email}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{p.host?.email}</p>
                       </td>
                       <td className="py-3 text-center">
-                        <span className="text-xs capitalize text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs capitalize text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded-full">
                           {p.method?.replace('_', ' ')}
                         </span>
                       </td>

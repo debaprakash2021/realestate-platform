@@ -28,13 +28,13 @@ export default function Favorites() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-2xl font-bold mb-2">Favorites</h1>
-      <p className="text-gray-500 mb-8">{favorites.length} saved {favorites.length === 1 ? 'property' : 'properties'}</p>
+      <p className="text-gray-500 dark:text-gray-400 mb-8">{favorites.length} saved {favorites.length === 1 ? 'property' : 'properties'}</p>
 
       {favorites.length === 0 ? (
         <div className="text-center py-20">
-          <Heart size={48} className="mx-auto text-gray-200 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No favorites yet</h3>
-          <p className="text-gray-400 mb-6">Save properties you love by clicking the heart icon</p>
+          <Heart size={48} className="mx-auto text-gray-200 dark:text-gray-700 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">No favorites yet</h3>
+          <p className="text-gray-400 dark:text-gray-500 mb-6">Save properties you love by clicking the heart icon</p>
           <Link to="/" className="btn-primary">Explore Properties</Link>
         </div>
       ) : (
@@ -50,25 +50,25 @@ export default function Favorites() {
                       onError={e => e.target.src = 'https://placehold.co/400x280?text=No+Image'} />
                   </Link>
                   <button onClick={() => handleRemove(p._id)}
-                    className="absolute top-3 right-3 p-1.5 rounded-full bg-white/90 hover:bg-white shadow text-rose-500 hover:text-rose-700 transition-colors">
+                    className="absolute top-3 right-3 p-1.5 rounded-full bg-white dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-800 shadow text-rose-500 hover:text-rose-700 transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </div>
                 <div className="mt-2.5 space-y-1">
                   <div className="flex justify-between items-start gap-2">
-                    <Link to={`/property/${p._id}`} className="font-semibold text-sm text-gray-900 hover:text-rose-500 line-clamp-1">{p.title}</Link>
+                    <Link to={`/property/${p._id}`} className="font-semibold text-sm text-gray-900 dark:text-white hover:text-rose-500 line-clamp-1">{p.title}</Link>
                     {p.ratings?.average > 0 && (
                       <span className="flex items-center gap-1 text-sm shrink-0">
-                        <Star size={12} className="fill-gray-900 text-gray-900" />{p.ratings.average}
+                        <Star size={12} className="fill-gray-900 dark:fill-gray-100 text-gray-900 dark:text-white" />{p.ratings.average}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
+                  <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                     <MapPin size={13} />{p.location?.city}, {p.location?.state}
                   </div>
                   <p className="text-sm">
                     <span className="font-semibold">₹{p.pricing?.basePrice?.toLocaleString()}</span>
-                    <span className="text-gray-500"> /night</span>
+                    <span className="text-gray-500 dark:text-gray-400"> /night</span>
                   </p>
                 </div>
               </div>

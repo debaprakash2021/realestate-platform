@@ -1,192 +1,374 @@
-import { useState, useEffect } from 'react'
-import { Search, SlidersHorizontal, X } from 'lucide-react'
-import api from '../../api/axios'
-import PropertyCard from '../../components/common/PropertyCard'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { Eye, EyeOff, Home, CheckCircle, XCircle, Mail, RefreshCw, ArrowLeft } from 'lucide-react'
+import api from '../../api/axios'
+import toast from 'react-hot-toast'
 
-const FALLBACK_TYPES = ['all', 'apartment', 'house', 'villa', 'cabin', 'cottage', 'studio']
+// ─── Password rules (must match backend) ────────────────────────
+const RULES = [
+  { id: 'len',   label: 'At least 8 characters',              test: p => p.length >= 8 },
+  { id: 'upper', label: 'One uppercase letter (A–Z)',          test: p => /[A-Z]/.test(p) },
+  { id: 'lower', label: 'One lowercase letter (a–z)',          test: p => /[a-z]/.test(p) },
+  { id: 'num',   label: 'One number (0–9)',                    test: p => /[0-9]/.test(p) },
+  { id: 'spec',  label: 'One special character (@$!%*?&#)',    test: p => /[@$!%*?&#^()_\-+=]/.test(p) },
+]
 
-export default function Home() {
-  const { user } = useAuth()
-  const [properties, setProperties] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [type, setType] = useState('all')
-  const [maxPrice, setMaxPrice] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
-  // FIX #8: Track the set of property IDs the user has favorited so we can pass
-  // correct initial state to PropertyCard. Without this, all heart icons start as
-  // un-liked on every page load, even if the user previously favorited them.
-  const [favoritedIds, setFavoritedIds] = useState(new Set())
-  const [propertyTypes, setPropertyTypes] = useState(FALLBACK_TYPES)
+const getStrength = (pw) => {
+  const passed = RULES.filter(r => r.test(pw)).length
+  if (passed <= 1) return { level: 0, label: 'Very weak',  color: '#ef4444' }
+  if (passed === 2) return { level: 1, label: 'Weak',       color: '#f97316' }
+  if (passed === 3) return { level: 2, label: 'Fair',       color: '#eab308' }
+  if (passed === 4) return { level: 3, label: 'Strong',     color: '#22c55e' }
+  return              { level: 4, label: 'Very strong', color: '#16a34a' }
+}
 
-  // Fetch available property types dynamically from the backend
-  useEffect(() => {
-    api.get('/properties?limit=200')
-      .then(res => {
-        const props = res.data.data?.properties || res.data.data || []
-        const types = ['all', ...new Set(props.map(p => p.propertyType).filter(Boolean))]
-        if (types.length > 1) setPropertyTypes(types)
-      })
-      .catch(() => { }) // silently keep fallback list
-  }, [])
+const validatePassword = (pw) => {
+  const failed = RULES.filter(r => !r.test(pw))
+  return failed.length === 0 ? null : failed[0].label
+}
 
-  const fetchProperties = async () => {
+// ─── Step 1: Registration Form ───────────────────────────────────
+function RegistrationForm({ onSuccess }) {
+  const [form, setForm]     = useState({ name: '', email: '', password: '', role: 'guest' })
+  const [loading, setLoading] = useState(false)
+  const [showPw, setShowPw]   = useState(false)
+  const [pwFocused, setPwFocused] = useState(false)
+
+  const strength = getStrength(form.password)
+  const allRulesPassed = RULES.every(r => r.test(form.password))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    const pwError = validatePassword(form.password)
+    if (pwError) { toast.error(pwError); return }
+
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (search) params.append('city', search)
-      if (type !== 'all') params.append('propertyType', type)
-      if (maxPrice) params.append('maxPrice', maxPrice)
-      const res = await api.get(`/properties?${params}`)
-      setProperties(res.data.data?.properties || res.data.data || [])
-    } catch { setProperties([]) }
-    finally { setLoading(false) }
-  }
-
-  // Fetch user's favorited IDs in parallel (only when logged in)
-  const fetchFavoriteIds = async () => {
-    if (!user) { setFavoritedIds(new Set()); return }
-    try {
-      const res = await api.get('/favorites')
-      const ids = (res.data.data || []).map(f => f.property?._id || f.property)
-      setFavoritedIds(new Set(ids))
-    } catch { /* non-critical, silently ignore */ }
-  }
-
-  useEffect(() => {
-    fetchProperties()
-  }, [type])
-
-  // Re-fetch favorite IDs when user logs in or out
-  useEffect(() => {
-    fetchFavoriteIds()
-  }, [user?.id])
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    fetchProperties()
-  }
-
-  const clearFilters = () => {
-    setSearch('')
-    setType('all')
-    setMaxPrice('')
-    setTimeout(fetchProperties, 100)
+      const res = await api.post('/auth/register', form)
+      const data = res.data.data
+      toast.success(`Code sent to ${form.email}!`)
+      onSuccess(form.email, form.role)
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Registration failed'
+      // If already registered but unverified — still proceed to OTP step
+      if (err.response?.data?.data?.requiresVerification || msg.includes('OTP has been sent')) {
+        toast(msg, { icon: '📧' })
+        onSuccess(form.email, form.role)
+      } else {
+        toast.error(msg)
+      }
+    } finally { setLoading(false) }
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-      {/* Hero Search */}
-      <div className="text-center mb-10 relative">
-        {/* decorative glow blob */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
-          <div style={{
-            width: 480, height: 180,
-            background: 'radial-gradient(ellipse, rgba(244,63,94,0.12) 0%, transparent 70%)',
-            filter: 'blur(24px)',
-            transform: 'translateY(-20px)'
-          }} />
+    <>
+      <div className="text-center mb-8">
+        <div className="w-12 h-12 bg-rose-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <Home size={24} className="text-white" />
         </div>
+        <h1 className="text-2xl font-bold">Create an account</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">Join thousands of travelers & hosts</p>
+      </div>
 
-        <h1 className="relative text-4xl sm:text-5xl font-extrabold mb-3 tracking-tight"
-          style={{ background: 'linear-gradient(135deg, #e11d48 0%, #9333ea 60%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-          Find Your Perfect Stay
-        </h1>
-        <p className="relative text-lg text-gray-500 mb-8">Discover unique places to stay around the world</p>
-
-        <form onSubmit={handleSearch} className="relative flex gap-2 max-w-2xl mx-auto">
-          <div className="flex-1 relative">
-            <Search size={18} className="absolute left-3 top-3 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by city..."
-              className="input-field pl-10"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+      <div className="card p-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Full Name</label>
+            <input type="text" required placeholder="John Doe" className="input-field"
+              value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           </div>
-          <button type="submit" className="btn-primary px-6">Search</button>
-          <button type="button" onClick={() => setShowFilters(!showFilters)} className="btn-secondary px-4">
-            <SlidersHorizontal size={18} />
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Email</label>
+            <input type="email" required placeholder="you@example.com" className="input-field"
+              value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Password</label>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                required
+                placeholder="Min 8 chars, uppercase, number, special"
+                className="input-field pr-10"
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                onFocus={() => setPwFocused(true)}
+                onBlur={() => setPwFocused(false)}
+              />
+              <button type="button" onClick={() => setShowPw(!showPw)}
+                className="absolute right-3 top-2.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400">
+                {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {/* Strength bar */}
+            {form.password && (
+              <div className="mt-2">
+                <div className="flex gap-1 mb-1">
+                  {[0,1,2,3,4].map(i => (
+                    <div key={i} className="h-1.5 flex-1 rounded-full transition-all duration-300"
+                      style={{ background: i <= strength.level ? strength.color : '#e5e7eb' }} />
+                  ))}
+                </div>
+                <p className="text-xs font-medium" style={{ color: strength.color }}>{strength.label}</p>
+              </div>
+            )}
+
+            {/* Rules checklist — show when focused or has value */}
+            {(pwFocused || form.password) && (
+              <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-1.5">
+                {RULES.map(rule => {
+                  const ok = rule.test(form.password)
+                  return (
+                    <div key={rule.id} className="flex items-center gap-2">
+                      {ok
+                        ? <CheckCircle size={13} className="text-green-500 shrink-0" />
+                        : <XCircle    size={13} className="text-gray-300 dark:text-gray-600 shrink-0" />
+                      }
+                      <span className={`text-xs ${ok ? 'text-green-700 line-through' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {rule.label}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Role */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">I want to</label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { value: 'guest', label: '🏠 Book Stays' },
+                { value: 'host',  label: '🏡 List Property' }
+              ].map(r => (
+                <button key={r.value} type="button"
+                  onClick={() => setForm({ ...form, role: r.value })}
+                  className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
+                    form.role === r.value
+                      ? 'border-rose-500 bg-rose-50 text-rose-600'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:border-gray-600'
+                  }`}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !allRulesPassed}
+            className="btn-primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Sending verification code...' : 'Create account'}
           </button>
         </form>
 
-        {/* Filters */}
-        {showFilters && (
-          <div className="flex flex-wrap items-center gap-3 max-w-2xl mx-auto mt-4 p-4 rounded-xl" style={{
-            background: 'rgba(255,255,255,0.85)',
-            border: '1px solid rgba(244,63,94,0.12)',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.07)'
-          }}>
-            <div className="flex-1 min-w-[150px]">
-              <label className="block text-xs text-gray-500 mb-1 text-left">Max Price per Night (₹)</label>
-              <input type="number" placeholder="e.g. 5000" className="input-field text-sm"
-                value={maxPrice} onChange={e => setMaxPrice(e.target.value)} />
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+          Already have an account?{' '}
+          <Link to="/login" className="text-rose-500 font-medium hover:underline">Sign in</Link>
+        </p>
+      </div>
+    </>
+  )
+}
+
+// ─── Step 2: OTP Verification ────────────────────────────────────
+function OtpVerification({ email, role, onBack }) {
+  const { setLoggedIn } = useAuth()
+  const navigate        = useNavigate()
+  const [otp, setOtp]   = useState(['', '', '', '', '', ''])
+  const [loading, setLoading]   = useState(false)
+  const [resending, setResending] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+
+  const inputRefs = Array.from({ length: 6 }, () => null)
+
+  // Countdown timer for resend cooldown
+  const startCooldown = (seconds = 60) => {
+    setCooldown(seconds)
+    const interval = setInterval(() => {
+      setCooldown(prev => {
+        if (prev <= 1) { clearInterval(interval); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  const handleChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return // only digits
+    const newOtp = [...otp]
+    newOtp[index] = value.slice(-1) // take last char if paste
+    setOtp(newOtp)
+    // Auto-advance
+    if (value && index < 5) inputRefs[index + 1]?.focus()
+    // Auto-submit when all 6 filled
+    if (value && index === 5 && newOtp.every(d => d)) {
+      handleVerify(newOtp.join(''))
+    }
+  }
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs[index - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    const newOtp = [...otp]
+    pasted.split('').forEach((d, i) => { newOtp[i] = d })
+    setOtp(newOtp)
+    if (pasted.length === 6) handleVerify(pasted)
+    else inputRefs[pasted.length]?.focus()
+  }
+
+  const handleVerify = async (code) => {
+    if (code.length !== 6) { toast.error('Enter the full 6-digit code'); return }
+    setLoading(true)
+    try {
+      const res = await api.post('/auth/verify-otp', { email, otp: code })
+      const { user, token } = res.data.data
+      setLoggedIn(user, token)
+      toast.success('Email verified! Welcome aboard 🎉')
+      navigate(user.role === 'host' ? '/host/dashboard' : '/')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Verification failed')
+      setOtp(['', '', '', '', '', ''])
+      inputRefs[0]?.focus()
+    } finally { setLoading(false) }
+  }
+
+  const handleResend = async () => {
+    if (cooldown > 0) return
+    setResending(true)
+    try {
+      await api.post('/auth/resend-otp', { email })
+      toast.success('New verification code sent!')
+      startCooldown(60)
+      setOtp(['', '', '', '', '', ''])
+      inputRefs[0]?.focus()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend code')
+    } finally { setResending(false) }
+  }
+
+  const otpValue = otp.join('')
+
+  return (
+    <>
+      <div className="text-center mb-8">
+        <div className="w-14 h-14 bg-rose-50 border-2 border-rose-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Mail size={26} className="text-rose-500" />
+        </div>
+        <h1 className="text-2xl font-bold">Check your email</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+          We sent a 6-digit code to<br />
+          <span className="font-semibold text-gray-700 dark:text-gray-200">{email}</span>
+        </p>
+      </div>
+
+      <div className="card p-8">
+        <div className="space-y-6">
+          {/* OTP Inputs */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-3 text-center">
+              Enter verification code
+            </label>
+            <div className="flex gap-2.5 justify-center" onPaste={handlePaste}>
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={el => inputRefs[i] = el}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={e => handleChange(i, e.target.value)}
+                  onKeyDown={e => handleKeyDown(i, e)}
+                  className={`w-11 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none transition-all ${
+                    digit
+                      ? 'border-rose-400 bg-rose-50 text-rose-600'
+                      : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-rose-400'
+                  }`}
+                />
+              ))}
             </div>
-            <button onClick={clearFilters} className="flex items-center gap-1 text-sm text-gray-400 hover:text-rose-500 mt-4 transition-colors">
-              <X size={15} /> Clear
+          </div>
+
+          {/* Verify button */}
+          <button
+            onClick={() => handleVerify(otpValue)}
+            disabled={loading || otpValue.length !== 6}
+            className="btn-primary w-full py-3 disabled:opacity-50"
+          >
+            {loading
+              ? <span className="flex items-center justify-center gap-2"><RefreshCw size={16} className="animate-spin" /> Verifying...</span>
+              : 'Verify Email'
+            }
+          </button>
+
+          {/* Resend */}
+          <div className="text-center space-y-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Didn't receive the code?</p>
+            <button
+              onClick={handleResend}
+              disabled={resending || cooldown > 0}
+              className="text-sm font-medium text-rose-500 hover:underline disabled:text-gray-400 dark:text-gray-500 disabled:no-underline"
+            >
+              {resending
+                ? 'Sending...'
+                : cooldown > 0
+                  ? `Resend in ${cooldown}s`
+                  : 'Resend code'
+              }
             </button>
           </div>
-        )}
-      </div>
 
-      {/* Property Type Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-8 scrollbar-hide">
-        {propertyTypes.map(t => (
-          <button key={t} onClick={() => setType(t)}
-            className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200"
-            style={type === t ? {
-              background: 'linear-gradient(135deg, #f43f5e, #9333ea)',
-              color: 'white',
-              boxShadow: '0 4px 12px rgba(244,63,94,0.3)'
-            } : {
-              background: 'rgba(255,255,255,0.8)',
-              color: '#4b5563',
-              border: '1px solid rgba(209,213,219,0.7)',
-              backdropFilter: 'blur(8px)'
-            }}
-          >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+          {/* Back */}
+          <button onClick={onBack}
+            className="flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 mx-auto">
+            <ArrowLeft size={14} /> Back to registration
           </button>
-        ))}
-      </div>
+        </div>
 
-      {/* Properties Grid */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-gray-200 rounded-xl h-56 mb-3" />
-              <div className="bg-gray-200 rounded h-4 w-3/4 mb-2" />
-              <div className="bg-gray-200 rounded h-3 w-1/2 mb-2" />
-              <div className="bg-gray-200 rounded h-3 w-1/4" />
-            </div>
-          ))}
-        </div>
-      ) : properties.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-5xl mb-4">🏠</p>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No properties found</h3>
-          <p className="text-gray-400">Try adjusting your filters</p>
-          <button onClick={clearFilters} className="btn-primary mt-4">Clear Filters</button>
-        </div>
-      ) : (
-        <>
-          <p className="text-sm text-gray-500 mb-4">{properties.length} properties found</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {properties.map(p => (
-              <PropertyCard
-                key={p._id}
-                property={p}
-                isFavorited={favoritedIds.has(p._id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
+        <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-6">
+          Code expires in 10 minutes. Check your spam folder if you don't see it.
+        </p>
+      </div>
+    </>
+  )
+}
+
+// ─── Main Export ─────────────────────────────────────────────────
+export default function Register() {
+  const [step, setStep]   = useState('form')   // 'form' | 'otp'
+  const [email, setEmail] = useState('')
+  const [role,  setRole]  = useState('guest')
+
+  const handleFormSuccess = (registeredEmail, registeredRole) => {
+    setEmail(registeredEmail)
+    setRole(registeredRole)
+    setStep('otp')
+  }
+
+  return (
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 bg-gray-50 dark:bg-gray-800/50 py-10">
+      <div className="w-full max-w-md">
+        {step === 'form'
+          ? <RegistrationForm onSuccess={handleFormSuccess} />
+          : <OtpVerification email={email} role={role} onBack={() => setStep('form')} />
+        }
+      </div>
     </div>
   )
 }

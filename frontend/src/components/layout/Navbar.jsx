@@ -52,7 +52,7 @@ function LogoutModal({ user, onConfirm, onCancel }) {
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 transition-all"
+            className="flex-1 px-4 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:border-gray-600 transition-all"
           >
             Stay Logged In
           </button>
@@ -105,7 +105,7 @@ function ThemeToggle() {
 
       {/* Sliding knob */}
       <span
-        className="absolute top-0.5 w-6 h-6 rounded-full bg-white flex items-center justify-center transition-all duration-300"
+        className="absolute top-0.5 w-6 h-6 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center transition-all duration-300"
         style={{
           left: isDark ? 'calc(100% - 26px)' : '2px',
           boxShadow: '0 2px 6px rgba(0,0,0,0.25)',

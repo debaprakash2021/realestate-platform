@@ -73,7 +73,7 @@ export default function Profile() {
             <img
               src={user?.avatar?.url || 'https://via.placeholder.com/80'}
               alt={user?.name}
-              className="w-20 h-20 rounded-full object-cover border-2 border-gray-100"
+              className="w-20 h-20 rounded-full object-cover border-2 border-gray-100 dark:border-gray-700/50"
             />
             <button
               onClick={() => fileRef.current?.click()}
@@ -96,7 +96,7 @@ export default function Profile() {
           </div>
           <div>
             <h2 className="text-lg font-semibold">{user?.name}</h2>
-            <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
+            <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mt-1">
               <Mail size={14} /> {user?.email}
             </div>
             <div className="flex items-center gap-1.5 text-sm mt-1">
@@ -114,28 +114,28 @@ export default function Profile() {
         </h2>
         <form onSubmit={handleUpdate} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Full Name</label>
             <input type="text" className="input-field" value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1 flex items-center gap-1">
               <Phone size={13} /> Phone
             </label>
             <input type="tel" placeholder="+91 XXXXXX XXXX" className="input-field" value={form.phone}
               onChange={e => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1 flex items-center gap-1">
               <FileText size={13} /> Bio
             </label>
             <textarea rows={3} placeholder="Tell guests or hosts about yourself..." className="input-field resize-none"
               value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" className="input-field bg-gray-50 cursor-not-allowed" value={user?.email} disabled />
-            <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Email</label>
+            <input type="email" className="input-field bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed" value={user?.email} disabled />
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Email cannot be changed</p>
           </div>
           <button type="submit" disabled={loading} className="btn-primary">
             {loading ? 'Saving...' : 'Save Changes'}
@@ -150,17 +150,17 @@ export default function Profile() {
         </h2>
         <form onSubmit={handlePasswordChange} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Current Password</label>
             <input type="password" className="input-field" value={pwForm.currentPassword}
               onChange={e => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">New Password</label>
             <input type="password" placeholder="Min 6 characters" className="input-field" value={pwForm.newPassword}
               onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Confirm New Password</label>
             <input type="password" className="input-field" value={pwForm.confirmPassword}
               onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
           </div>

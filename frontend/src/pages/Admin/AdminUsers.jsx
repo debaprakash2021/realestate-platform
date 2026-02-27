@@ -39,7 +39,7 @@ function UserRow({ user, onUpdate }) {
   }
 
   return (
-    <div className={`border rounded-xl p-4 transition-colors ${user.isActive ? 'border-gray-100 hover:bg-gray-50' : 'border-red-100 bg-red-50/30'}`}>
+    <div className={`border rounded-xl p-4 transition-colors ${user.isActive ? 'border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50' : 'border-red-100 bg-red-50/30'}`}>
       <div className="flex flex-col sm:flex-row gap-4 items-start">
 
         {/* Avatar + Info */}
@@ -55,28 +55,28 @@ function UserRow({ user, onUpdate }) {
             )}
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-sm text-gray-900 truncate">{user.name}</p>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
-            {user.phone && <p className="text-xs text-gray-400">📞 {user.phone}</p>}
-            <p className="text-xs text-gray-300 font-mono mt-0.5">ID: {user._id}</p>
+            <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{user.name}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user.email}</p>
+            {user.phone && <p className="text-xs text-gray-400 dark:text-gray-500">📞 {user.phone}</p>}
+            <p className="text-xs text-gray-300 dark:text-gray-600 font-mono mt-0.5">ID: {user._id}</p>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="text-xs text-gray-500 flex gap-4 shrink-0">
+        <div className="text-xs text-gray-500 dark:text-gray-400 flex gap-4 shrink-0">
           <div className="text-center">
-            <p className="font-semibold text-gray-800">{user.stats?.totalBookings || 0}</p>
-            <p className="text-gray-400">Bookings</p>
+            <p className="font-semibold text-gray-800 dark:text-gray-100">{user.stats?.totalBookings || 0}</p>
+            <p className="text-gray-400 dark:text-gray-500">Bookings</p>
           </div>
           {user.role === 'host' && (
             <div className="text-center">
-              <p className="font-semibold text-gray-800">{user.hostInfo?.totalListings || 0}</p>
-              <p className="text-gray-400">Listings</p>
+              <p className="font-semibold text-gray-800 dark:text-gray-100">{user.hostInfo?.totalListings || 0}</p>
+              <p className="text-gray-400 dark:text-gray-500">Listings</p>
             </div>
           )}
           <div className="text-center">
-            <p className="font-semibold text-gray-800">{fmt(user.createdAt)}</p>
-            <p className="text-gray-400">Joined</p>
+            <p className="font-semibold text-gray-800 dark:text-gray-100">{fmt(user.createdAt)}</p>
+            <p className="text-gray-400 dark:text-gray-500">Joined</p>
           </div>
         </div>
 
@@ -172,7 +172,7 @@ export default function AdminUsers() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Users size={24} className="text-rose-500" /> Manage Users
           </h1>
-          <p className="text-sm text-gray-500 mt-1">{total} total users</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{total} total users</p>
         </div>
         <button onClick={() => fetchUsers()} className="btn-secondary flex items-center gap-2 text-sm">
           <RefreshCw size={15} /> Refresh
@@ -188,7 +188,7 @@ export default function AdminUsers() {
             className={`px-4 py-2 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-colors ${
               roleFilter === r
                 ? 'bg-rose-500 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-rose-300'
+                : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-rose-300'
             }`}
           >
             {r === 'all' ? 'All Users' : r + 's'}
@@ -199,7 +199,7 @@ export default function AdminUsers() {
       {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-6">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-3 text-gray-400" />
+          <Search size={16} className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Search by name or email..."
@@ -222,8 +222,8 @@ export default function AdminUsers() {
         </div>
       ) : users.length === 0 ? (
         <div className="text-center py-20">
-          <Users size={40} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-gray-400">No users found</p>
+          <Users size={40} className="mx-auto text-gray-200 dark:text-gray-700 mb-3" />
+          <p className="text-gray-400 dark:text-gray-500">No users found</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -235,8 +235,8 @@ export default function AdminUsers() {
 
       {/* Pagination */}
       {total > LIMIT && (
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-          <p className="text-sm text-gray-500">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/50">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, total)} of {total}
           </p>
           <div className="flex gap-2">

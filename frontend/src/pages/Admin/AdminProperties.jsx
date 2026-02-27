@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 
 const STATUS_CONFIG = {
   active: { cls: 'bg-green-100 text-green-700', label: 'Active' },
-  inactive: { cls: 'bg-gray-100 text-gray-600', label: 'Inactive' },
+  inactive: { cls: 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400', label: 'Inactive' },
   suspended: { cls: 'bg-red-100 text-red-700', label: 'Suspended' },
   pending: { cls: 'bg-amber-100 text-amber-700', label: '⏳ Pending Approval' },
   rejected: { cls: 'bg-red-100 text-red-600', label: '❌ Rejected' },
@@ -94,7 +94,7 @@ function PropertyRow({ property, onUpdate, onDelete }) {
       <div className={`border rounded-xl p-4 transition-colors ${property.status === 'suspended' ? 'border-red-100 bg-red-50/20' :
         property.status === 'pending' ? 'border-amber-200 bg-amber-50/30' :
           property.status === 'rejected' ? 'border-red-100 bg-red-50/10' :
-            'border-gray-100 hover:bg-gray-50'
+            'border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50'
         }`}>
         <div className="flex flex-col sm:flex-row gap-4">
 
@@ -107,7 +107,7 @@ function PropertyRow({ property, onUpdate, onDelete }) {
             />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="font-semibold text-sm text-gray-900 truncate">{property.title}</p>
+                <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{property.title}</p>
                 {property.isVerified && (
                   <span title="Verified"><BadgeCheck size={14} className="text-blue-500 shrink-0" /></span>
                 )}
@@ -115,23 +115,23 @@ function PropertyRow({ property, onUpdate, onDelete }) {
                   <span title="Featured"><Sparkles size={14} className="text-yellow-500 shrink-0" /></span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5">
                 <MapPin size={11} /> {property.location?.city}, {property.location?.state}, {property.location?.country}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 ₹{property.pricing?.basePrice?.toLocaleString()}/night
                 {property.ratings?.average > 0 && (
                   <span className="ml-2">⭐ {property.ratings.average} ({property.ratings.count})</span>
                 )}
                 <span className="ml-2">🏠 {property.stats?.totalBookings || 0} bookings</span>
               </p>
-              <p className="text-xs text-gray-300 font-mono mt-0.5">ID: {property._id}</p>
+              <p className="text-xs text-gray-300 dark:text-gray-600 font-mono mt-0.5">ID: {property._id}</p>
             </div>
           </div>
 
           {/* Host */}
           <div className="min-w-[140px] shrink-0">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Host</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide mb-1">Host</p>
             <div className="flex items-center gap-2">
               <img
                 src={property.host?.avatar?.url || 'https://via.placeholder.com/28'}
@@ -140,10 +140,10 @@ function PropertyRow({ property, onUpdate, onDelete }) {
               />
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{property.host?.name}</p>
-                <p className="text-xs text-gray-400 truncate">{property.host?.email}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{property.host?.email}</p>
               </div>
             </div>
-            <p className="text-xs text-gray-400 mt-1">Listed: {fmt(property.createdAt)}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Listed: {fmt(property.createdAt)}</p>
           </div>
 
           {/* Status + Actions */}
@@ -177,7 +177,7 @@ function PropertyRow({ property, onUpdate, onDelete }) {
                   value={property.status}
                   onChange={e => doStatus(e.target.value)}
                   disabled={acting}
-                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-white disabled:opacity-50"
+                  className="text-xs border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 disabled:opacity-50"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -195,7 +195,7 @@ function PropertyRow({ property, onUpdate, onDelete }) {
                 title={property.isVerified ? 'Remove verification' : 'Verify listing'}
                 className={`p-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${property.isVerified
                   ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                  : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600'
                   }`}
               >
                 <BadgeCheck size={14} />
@@ -207,7 +207,7 @@ function PropertyRow({ property, onUpdate, onDelete }) {
                 title={property.isFeatured ? 'Remove from featured' : 'Feature this listing'}
                 className={`p-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1 ${property.isFeatured
                   ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-yellow-50 hover:text-yellow-600'
+                  : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-yellow-50 hover:text-yellow-600'
                   }`}
               >
                 <Sparkles size={14} />
@@ -229,9 +229,9 @@ function PropertyRow({ property, onUpdate, onDelete }) {
       {/* Reject reason modal */}
       {rejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-1">Reject Property</h3>
-            <p className="text-sm text-gray-500 mb-4">Optionally add a reason — it'll be sent to the host.</p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-1">Reject Property</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Optionally add a reason — it'll be sent to the host.</p>
             <textarea
               rows={3}
               placeholder="e.g. Images are unclear, description too short..."
@@ -309,7 +309,7 @@ export default function AdminProperties() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Building size={24} className="text-rose-500" /> Manage Properties
           </h1>
-          <p className="text-sm text-gray-500 mt-1">{total} total listings</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{total} total listings</p>
         </div>
         <button onClick={() => fetchProperties()} className="btn-secondary flex items-center gap-2 text-sm">
           <RefreshCw size={15} /> Refresh
@@ -317,7 +317,7 @@ export default function AdminProperties() {
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 text-xs text-gray-500 mb-5 flex-wrap">
+      <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-400 mb-5 flex-wrap">
         <span className="flex items-center gap-1"><BadgeCheck size={13} className="text-blue-500" /> Verified = trusted listing</span>
         <span className="flex items-center gap-1"><Sparkles size={13} className="text-yellow-500" /> Featured = shown prominently on Home</span>
         <span className="flex items-center gap-1 text-red-500">Suspended = hidden from all guests</span>
@@ -331,7 +331,7 @@ export default function AdminProperties() {
             onClick={() => handleStatusFilter(t)}
             className={`px-4 py-2 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-colors ${statusFilter === t
               ? 'bg-rose-500 text-white'
-              : 'bg-white border border-gray-200 text-gray-600 hover:border-rose-300'
+              : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-rose-300'
               }`}
           >
             {t === 'all' ? 'All' : t}
@@ -342,7 +342,7 @@ export default function AdminProperties() {
       {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-6">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-3 text-gray-400" />
+          <Search size={16} className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Search by title, city, or country..."
@@ -365,8 +365,8 @@ export default function AdminProperties() {
         </div>
       ) : properties.length === 0 ? (
         <div className="text-center py-20">
-          <Building size={40} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-gray-400">No properties found</p>
+          <Building size={40} className="mx-auto text-gray-200 dark:text-gray-700 mb-3" />
+          <p className="text-gray-400 dark:text-gray-500">No properties found</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -383,8 +383,8 @@ export default function AdminProperties() {
 
       {/* Pagination */}
       {total > LIMIT && (
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-          <p className="text-sm text-gray-500">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/50">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, total)} of {total}
           </p>
           <div className="flex gap-2">

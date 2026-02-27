@@ -115,7 +115,7 @@ export default function Messages() {
 
   if (loading) return (
     <div className="max-w-5xl mx-auto px-4 py-10 flex items-center justify-center">
-      <div className="text-gray-400 flex items-center gap-2">
+      <div className="text-gray-400 dark:text-gray-500 flex items-center gap-2">
         <RefreshCw size={16} className="animate-spin" /> Loading messages...
       </div>
     </div>
@@ -125,7 +125,7 @@ export default function Messages() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Messages</h1>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
           <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
           Live · updates every 5s
         </div>
@@ -134,21 +134,21 @@ export default function Messages() {
       <div className="card overflow-hidden flex h-[620px]">
 
         {/* ─── Conversation List ────────────────────────────── */}
-        <div className={`w-full sm:w-80 border-r border-gray-100 flex flex-col ${active ? 'hidden sm:flex' : 'flex'}`}>
-          <div className="p-4 border-b border-gray-100">
-            <p className="text-sm font-medium text-gray-600">
+        <div className={`w-full sm:w-80 border-r border-gray-100 dark:border-gray-700/50 flex flex-col ${active ? 'hidden sm:flex' : 'flex'}`}>
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700/50">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
               {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
             </p>
           </div>
 
           {conversations.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-              <MessageCircle size={40} className="text-gray-200 mb-3" />
-              <p className="text-sm text-gray-500">No conversations yet</p>
-              <p className="text-xs text-gray-400 mt-1">Message a host from any property page</p>
+              <MessageCircle size={40} className="text-gray-200 dark:text-gray-700 mb-3" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">No conversations yet</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Message a host from any property page</p>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+            <div className="flex-1 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
               {conversations.map(c => {
                 const other = otherPerson(c)
                 const userId = user?.id?.toString()
@@ -158,7 +158,7 @@ export default function Messages() {
 
                 return (
                   <button key={c._id} onClick={() => setActive(c)}
-                    className={`w-full p-4 text-left hover:bg-gray-50 transition-colors flex items-start gap-3 ${
+                    className={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors flex items-start gap-3 ${
                       active?._id === c._id ? 'bg-rose-50 border-l-2 border-rose-400' : ''
                     }`}>
                     <div className="relative shrink-0">
@@ -173,18 +173,18 @@ export default function Messages() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline">
-                        <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                        <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-gray-900 dark:text-white' : 'font-medium text-gray-700 dark:text-gray-200'}`}>
                           {other.name}
                         </p>
                         {c.lastMessage?.createdAt && (
-                          <span className="text-xs text-gray-400 shrink-0 ml-1">
+                          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0 ml-1">
                             {new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 truncate">{c.property?.title}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{c.property?.title}</p>
                       {c.lastMessage?.content && (
-                        <p className={`text-xs truncate mt-0.5 ${hasUnread ? 'text-gray-600 font-medium' : 'text-gray-400'}`}>
+                        <p className={`text-xs truncate mt-0.5 ${hasUnread ? 'text-gray-600 dark:text-gray-400 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
                           {c.lastMessage.content}
                         </p>
                       )}
@@ -199,15 +199,15 @@ export default function Messages() {
         {/* ─── Message View ─────────────────────────────────── */}
         <div className={`flex-1 flex flex-col ${!active ? 'hidden sm:flex' : 'flex'}`}>
           {!active ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
-              <MessageCircle size={40} className="mb-3 text-gray-200" />
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 dark:text-gray-500">
+              <MessageCircle size={40} className="mb-3 text-gray-200 dark:text-gray-700" />
               <p className="text-sm">Select a conversation to start chatting</p>
             </div>
           ) : (
             <>
               {/* Header */}
-              <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-                <button onClick={() => setActive(null)} className="sm:hidden mr-1 text-gray-500">
+              <div className="p-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-3">
+                <button onClick={() => setActive(null)} className="sm:hidden mr-1 text-gray-500 dark:text-gray-400">
                   <ArrowLeft size={20} />
                 </button>
                 <img
@@ -217,7 +217,7 @@ export default function Messages() {
                 />
                 <div className="flex-1">
                   <p className="font-medium text-sm">{otherPerson(active).name}</p>
-                  <p className="text-xs text-gray-400">{active.property?.title}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{active.property?.title}</p>
                 </div>
                 {newMsg && (
                   <span className="text-xs text-rose-500 font-medium animate-pulse">
@@ -229,7 +229,7 @@ export default function Messages() {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.length === 0 ? (
-                  <div className="text-center text-sm text-gray-400 mt-10">
+                  <div className="text-center text-sm text-gray-400 dark:text-gray-500 mt-10">
                     No messages yet. Say hi! 👋
                   </div>
                 ) : messages.map(m => {
@@ -248,10 +248,10 @@ export default function Messages() {
                       <div className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm ${
                         isMine
                           ? 'bg-rose-500 text-white rounded-br-sm'
-                          : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                          : 'bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-gray-100 rounded-bl-sm'
                       } ${m.isDeleted ? 'italic opacity-60' : ''}`}>
                         {m.isDeleted ? 'This message was deleted' : m.content}
-                        <p className={`text-xs mt-1 ${isMine ? 'text-rose-200' : 'text-gray-400'}`}>
+                        <p className={`text-xs mt-1 ${isMine ? 'text-rose-200' : 'text-gray-400 dark:text-gray-500'}`}>
                           {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -262,7 +262,7 @@ export default function Messages() {
               </div>
 
               {/* Input */}
-              <form onSubmit={sendMessage} className="p-4 border-t border-gray-100 flex gap-2">
+              <form onSubmit={sendMessage} className="p-4 border-t border-gray-100 dark:border-gray-700/50 flex gap-2">
                 <input
                   type="text"
                   placeholder="Type a message..."
