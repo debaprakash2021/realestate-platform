@@ -22,7 +22,11 @@ import AdminProperties from './pages/Admin/AdminProperties'
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth()
-  if (loading) return <div className="flex items-center justify-center h-screen text-gray-400">Loading...</div>
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen text-gray-400 dark:text-gray-500 dark:bg-gray-950">
+      Loading...
+    </div>
+  )
   if (!user) return <Navigate to="/login" replace />
   if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />
   return children
@@ -30,7 +34,7 @@ const ProtectedRoute = ({ children, roles }) => {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
