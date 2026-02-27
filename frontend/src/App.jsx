@@ -1,5 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
+import { savePendingAction } from './context/AuthContext'
 import Navbar from './components/layout/Navbar'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
@@ -22,13 +23,26 @@ import AdminProperties from './pages/Admin/AdminProperties'
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return (
     <div className="flex items-center justify-center h-screen text-gray-400 dark:text-gray-500 dark:bg-gray-950">
       Loading...
     </div>
   )
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) {
+    // Save the page they were trying to reach so we can redirect them back after login
+    savePendingAction({ type: 'route', returnTo: location.pathname + location.search })
+    return <Navigate to="/login" replace />
+  }
   if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />
+  return children
+}
+
+// Redirect already-logged-in users away from login/register pages
+const GuestRoute = ({ children }) => {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (user) return <Navigate to={user.role === 'host' || user.role === 'admin' ? '/host/dashboard' : '/'} replace />
   return children
 }
 
@@ -39,8 +53,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/property/:id" element={<PropertyDetail />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+        <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
         <Route path="/dashboard" element={<ProtectedRoute><GuestDashboard /></ProtectedRoute>} />
         <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />

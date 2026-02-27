@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Star, MapPin, Users, Bed, Bath, Wifi, Car, Wind, Flame, Tv, Utensils, ArrowLeft, Heart, MessageCircle } from 'lucide-react'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
+import { savePendingAction, consumePendingAction } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
 export default function PropertyDetail() {
@@ -15,6 +16,20 @@ export default function PropertyDetail() {
   const [booking, setBooking] = useState({ checkIn: '', checkOut: '', adults: 1, children: 0 })
   const [bookingLoading, setBookingLoading] = useState(false)
   const [imgIdx, setImgIdx] = useState(0)
+  const [pendingBookingRestored, setPendingBookingRestored] = useState(false)
+
+  // ─── Restore pending booking if user just logged in ────────────────────────
+  useEffect(() => {
+    const pending = consumePendingAction()
+    if (pending && pending.propertyId === id && pending.type === 'book' && pending.bookingData) {
+      setBooking(pending.bookingData)
+      setPendingBookingRestored(true)
+      toast('Your booking details have been restored! Click Reserve to complete.', { icon: '📋', duration: 4000 })
+    } else if (pending && pending.propertyId === id && pending.type === 'favorite') {
+      // Will be handled after property loads — store it temporarily
+      sessionStorage.setItem('pendingAction', JSON.stringify(pending))
+    }
+  }, [id])
 
   // ─── Live price calculation ──────────────────────────────────────
   const priceCalc = useMemo(() => {
@@ -58,7 +73,18 @@ export default function PropertyDetail() {
 
   const handleBook = async (e) => {
     e.preventDefault()
-    if (!user) { toast.error('Please login to book'); navigate('/login'); return }
+    if (!user) {
+      // Save the full booking state so user doesn't lose their selections
+      savePendingAction({
+        type: 'book',
+        propertyId: id,
+        returnTo: `/property/${id}`,
+        bookingData: booking
+      })
+      toast('Please sign in to complete your booking', { icon: '🔐', duration: 3000 })
+      navigate('/login')
+      return
+    }
     setBookingLoading(true)
     try {
       const res = await api.post('/bookings', {
@@ -75,7 +101,16 @@ export default function PropertyDetail() {
   }
 
   const handleMessage = async () => {
-    if (!user) { toast.error('Please login to message host'); navigate('/login'); return }
+    if (!user) {
+      savePendingAction({
+        type: 'message',
+        propertyId: id,
+        returnTo: `/property/${id}`
+      })
+      toast('Please sign in to message the host', { icon: '🔐', duration: 3000 })
+      navigate('/login')
+      return
+    }
     try {
       await api.post('/messages/conversation', { propertyId: id })
       toast.success('Conversation started!')
@@ -267,6 +302,11 @@ export default function PropertyDetail() {
                 <button type="submit" disabled={bookingLoading} className="btn-primary w-full py-3">
                   {bookingLoading ? 'Booking...' : 'Reserve'}
                 </button>
+                {pendingBookingRestored && (
+                  <p className="text-xs text-center text-rose-500 font-medium mt-1">
+                    ✅ Your saved booking details are pre-filled!
+                  </p>
+                )}
               </form>
             )}
 

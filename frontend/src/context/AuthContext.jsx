@@ -2,6 +2,29 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 
+// ─── Pending Action Helpers ────────────────────────────────────────────────
+// Used to save what an unauthenticated user was trying to do (book, favorite,
+// message) so we can restore their UI state seamlessly after they log in.
+const PENDING_ACTION_KEY = 'pendingAction'
+
+export const savePendingAction = (action) => {
+  // action: { type, returnTo, propertyId, bookingData?, ... }
+  sessionStorage.setItem(PENDING_ACTION_KEY, JSON.stringify(action))
+}
+
+export const consumePendingAction = () => {
+  const raw = sessionStorage.getItem(PENDING_ACTION_KEY)
+  if (!raw) return null
+  sessionStorage.removeItem(PENDING_ACTION_KEY)
+  try { return JSON.parse(raw) } catch { return null }
+}
+
+export const getPendingAction = () => {
+  const raw = sessionStorage.getItem(PENDING_ACTION_KEY)
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch { return null }
+}
+
 const AuthContext = createContext()
 
 // FIX #10: Normalize user object so user.id is ALWAYS a string.

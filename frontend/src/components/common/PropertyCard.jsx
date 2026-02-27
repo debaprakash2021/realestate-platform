@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Star, MapPin, Heart } from 'lucide-react'
 import { useState } from 'react'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
+import { savePendingAction } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
 // FIX #7: Accept `isFavorited` prop so the parent (Home, Favorites, etc.) can pass
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast'
 // Falls back to false if prop not provided (for unauthenticated users).
 export default function PropertyCard({ property, isFavorited = false }) {
   const { user }              = useAuth()
+  const navigate              = useNavigate()
   const [liked, setLiked]     = useState(isFavorited)
   const [toggling, setToggling] = useState(false)
 
@@ -21,7 +23,16 @@ export default function PropertyCard({ property, isFavorited = false }) {
 
   const handleFavorite = async (e) => {
     e.preventDefault()
-    if (!user) { toast.error('Please login to save favorites'); return }
+    if (!user) {
+      savePendingAction({
+        type: 'favorite',
+        propertyId: property._id,
+        returnTo: `/property/${property._id}`
+      })
+      toast('Sign in to save this property to your favorites', { icon: '❤️', duration: 3000 })
+      navigate('/login')
+      return
+    }
     setToggling(true)
     try {
       const res    = await api.post(`/favorites/${property._id}/toggle`)

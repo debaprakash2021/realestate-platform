@@ -1,9 +1,20 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { consumePendingAction } from '../../context/AuthContext'
 import { Eye, EyeOff, Home, Mail } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
+
+// ─── Shared post-auth redirect helper ────────────────────────────────────────
+// After any successful login/OTP verify, check if there's a pending action
+// (e.g. user was trying to book before being redirected to login).
+// If so, return them to that page; otherwise use the default role-based route.
+const getPostAuthRedirect = (user) => {
+  const pending = consumePendingAction()
+  if (pending?.returnTo) return pending.returnTo
+  return (user.role === 'host' || user.role === 'admin') ? '/host/dashboard' : '/'
+}
 
 // ─── OTP screen shown when logging in with unverified email ─────
 function VerifyOtpPrompt({ email, onBack }) {
@@ -51,7 +62,7 @@ function VerifyOtpPrompt({ email, onBack }) {
       const { user } = res.data.data
       setLoggedIn(user, res.data.data.token)
       toast.success('Email verified! Welcome 🎉')
-      navigate(user.role === 'host' || user.role === 'admin' ? '/host/dashboard' : '/')
+      navigate(getPostAuthRedirect(user))
     } catch (err) {
       toast.error(err.response?.data?.message || 'Verification failed')
       setOtp(['', '', '', '', '', ''])
@@ -142,7 +153,7 @@ export default function Login() {
     try {
       const user = await login(form.email, form.password)
       toast.success(`Welcome back, ${user.name}! 👋`)
-      navigate(user.role === 'host' || user.role === 'admin' ? '/host/dashboard' : '/')
+      navigate(getPostAuthRedirect(user))
     } catch (err) {
       // Check if backend flagged this as unverified
       const data = err.response?.data

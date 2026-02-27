@@ -1,9 +1,17 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { consumePendingAction } from '../../context/AuthContext'
 import { Eye, EyeOff, Home, CheckCircle, XCircle, Mail, RefreshCw, ArrowLeft } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
+
+// ─── Shared post-auth redirect helper ────────────────────────────────────────
+const getPostAuthRedirect = (user) => {
+  const pending = consumePendingAction()
+  if (pending?.returnTo) return pending.returnTo
+  return user.role === 'host' ? '/host/dashboard' : '/'
+}
 
 // ─── Password rules (must match backend) ────────────────────────
 const RULES = [
@@ -240,7 +248,7 @@ function OtpVerification({ email, role, onBack }) {
       const { user, token } = res.data.data
       setLoggedIn(user, token)
       toast.success('Email verified! Welcome aboard 🎉')
-      navigate(user.role === 'host' ? '/host/dashboard' : '/')
+      navigate(getPostAuthRedirect(user))
     } catch (err) {
       toast.error(err.response?.data?.message || 'Verification failed')
       setOtp(['', '', '', '', '', ''])
