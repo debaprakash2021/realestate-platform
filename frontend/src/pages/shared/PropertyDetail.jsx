@@ -43,8 +43,10 @@ const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December']
 
 // ─── Availability Calendar Component ─────────────────────────────────────────
+// compact=true  → 1 month, used inside the narrow booking card
+// compact=false → 2 months side-by-side, used in the full-width section
 
-function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClose }) {
+function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClose, compact = false }) {
   const today      = toDateStr(new Date())
   const blockedSet = useMemo(() => buildBlockedSet(blockedDates), [blockedDates])
 
@@ -60,6 +62,11 @@ function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClo
   const nextMonth = () => {
     if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) }
     else setViewMonth(m => m + 1)
+  }
+
+  const canGoPrev = () => {
+    const now = new Date()
+    return !(viewYear === now.getFullYear() && viewMonth === now.getMonth())
   }
 
   const rangeHasBlocked = useCallback((from, to) => {
@@ -83,7 +90,7 @@ function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClo
         return
       }
       if (rangeHasBlocked(checkIn, dateStr)) {
-        toast.error('Selected range includes unavailable dates. Please choose different dates.')
+        toast.error('Selected range includes unavailable dates.')
         return
       }
       onChange({ checkIn, checkOut: dateStr })
@@ -114,11 +121,6 @@ function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClo
     return cells
   }
 
-  const month1 = { year: viewYear, month: viewMonth }
-  const month2 = viewMonth === 11
-    ? { year: viewYear + 1, month: 0 }
-    : { year: viewYear,     month: viewMonth + 1 }
-
   const renderMonth = ({ year, month }) => {
     const grid = buildGrid(year, month)
     return (
@@ -126,34 +128,45 @@ function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClo
         <p className="text-center text-sm font-semibold text-gray-900 dark:text-white mb-3">
           {MONTHS[month]} {year}
         </p>
+
+        {/* Day headers — each in its own cell so they never collide */}
         <div className="grid grid-cols-7 mb-1">
           {DAYS.map(d => (
-            <div key={d} className="text-center text-[10px] font-medium text-gray-400 dark:text-gray-500 py-1">{d}</div>
+            <div key={d} className="flex items-center justify-center text-[11px] font-medium text-gray-400 dark:text-gray-500 py-1">
+              {d}
+            </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-y-0.5">
+
+        {/* Date cells */}
+        <div className="grid grid-cols-7">
           {grid.map((dateStr, i) => {
-            if (!dateStr) return <div key={`e-${i}`} />
+            if (!dateStr) return <div key={`e-${i}`} className="h-9" />
+
             const { isPast, isBlocked, isCheckIn, isCheckOut, inRange } = getDayState(dateStr)
-            const isDisabled = isPast || isBlocked
-            const isEndpoint = isCheckIn || isCheckOut
+            const isDisabled   = isPast || isBlocked
+            const isEndpoint   = isCheckIn || isCheckOut
             const isRangeStart = isCheckIn && checkOut
             const isRangeEnd   = isCheckOut && checkIn
 
-            let cellCls  = 'relative flex items-center justify-center h-8 text-xs select-none '
-            let innerCls = 'w-8 h-8 flex items-center justify-center rounded-full transition-colors '
+            // Cell wrapper handles the range background strip
+            let cellCls = 'relative flex items-center justify-center h-9 select-none '
+            if (inRange)        cellCls += 'bg-rose-50 dark:bg-rose-900/20 '
+            if (isRangeStart)   cellCls += 'rounded-l-full '
+            if (isRangeEnd)     cellCls += 'rounded-r-full '
 
+            // Inner circle
+            let dotCls = 'relative z-10 flex items-center justify-center w-8 h-8 rounded-full text-xs transition-colors '
             if (isDisabled) {
-              innerCls += isBlocked
+              dotCls += isBlocked
                 ? 'text-gray-300 dark:text-gray-600 line-through cursor-not-allowed'
                 : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
             } else if (isEndpoint) {
-              innerCls += 'bg-rose-500 text-white font-semibold cursor-pointer z-10'
+              dotCls += 'bg-rose-500 text-white font-bold cursor-pointer shadow-md'
             } else if (inRange) {
-              cellCls  += 'bg-rose-50 dark:bg-rose-900/20 '
-              innerCls += 'text-rose-700 dark:text-rose-300 cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/40'
+              dotCls += 'text-rose-700 dark:text-rose-300 cursor-pointer hover:bg-rose-200 dark:hover:bg-rose-800/50'
             } else {
-              innerCls += 'text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700'
+              dotCls += 'text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60'
             }
 
             return (
@@ -164,9 +177,12 @@ function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClo
                 onMouseLeave={() => setHovered(null)}
                 onClick={() => handleDayClick(dateStr)}
               >
-                {isRangeStart && <div className="absolute inset-y-0 right-0 left-1/2 bg-rose-50 dark:bg-rose-900/20 z-0" />}
-                {isRangeEnd   && <div className="absolute inset-y-0 left-0 right-1/2 bg-rose-50 dark:bg-rose-900/20 z-0" />}
-                <div className={innerCls}>{new Date(dateStr + 'T00:00').getDate()}</div>
+                {/* Range bar behind the endpoint dot */}
+                {isRangeStart && <div className="absolute inset-y-0 left-1/2 right-0 bg-rose-50 dark:bg-rose-900/20" />}
+                {isRangeEnd   && <div className="absolute inset-y-0 right-1/2 left-0 bg-rose-50 dark:bg-rose-900/20" />}
+                <div className={dotCls}>
+                  {new Date(dateStr + 'T00:00').getDate()}
+                </div>
               </div>
             )
           })}
@@ -175,72 +191,91 @@ function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClo
     )
   }
 
-  const canGoPrev = () => {
-    const now = new Date()
-    return !(viewYear === now.getFullYear() && viewMonth === now.getMonth())
-  }
+  const month1 = { year: viewYear, month: viewMonth }
+  const month2 = viewMonth === 11
+    ? { year: viewYear + 1, month: 0 }
+    : { year: viewYear,     month: viewMonth + 1 }
 
   const nights = checkIn && checkOut
     ? Math.ceil((new Date(checkOut) - new Date(checkIn)) / 86400000)
     : 0
 
-  return (
-    <div className="mt-3 border border-gray-200 dark:border-gray-600 rounded-2xl p-4 bg-white dark:bg-gray-800/80 shadow-lg">
+  // Short date display for the header pills
+  const fmtShort = (str) => str
+    ? new Date(str + 'T00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+    : null
 
-      {/* Month nav + selected range */}
+  return (
+    <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 bg-white dark:bg-gray-900 shadow-lg">
+
+      {/* Nav row */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={prevMonth}
           disabled={!canGoPrev()}
-          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
-          <ChevronLeft size={16} className="text-gray-600 dark:text-gray-300" />
+          <ChevronLeft size={15} className="text-gray-600 dark:text-gray-300" />
         </button>
 
-        <div className="flex gap-1 text-xs">
-          <span className={`px-2 py-0.5 rounded-full font-medium ${
-            selecting === 'in' ? 'bg-rose-500 text-white'
-              : checkIn ? 'bg-rose-100 text-rose-600'
-              : 'text-gray-400 dark:text-gray-500'
+        {/* Selected range pills */}
+        <div className="flex items-center gap-2 text-xs">
+          <span className={`px-2.5 py-1 rounded-full font-medium whitespace-nowrap transition-colors ${
+            selecting === 'in'
+              ? 'bg-rose-500 text-white'
+              : checkIn
+              ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400'
+              : 'text-gray-400 dark:text-gray-500 border border-dashed border-gray-300 dark:border-gray-600 px-2.5'
           }`}>
-            {checkIn ? checkIn : 'Check-in'}
+            {checkIn ? fmtShort(checkIn) : 'Check-in'}
           </span>
-          <span className="text-gray-300 dark:text-gray-600 self-center">→</span>
-          <span className={`px-2 py-0.5 rounded-full font-medium ${
-            selecting === 'out' ? 'bg-rose-500 text-white'
-              : checkOut ? 'bg-rose-100 text-rose-600'
-              : 'text-gray-400 dark:text-gray-500'
+          <span className="text-gray-300 dark:text-gray-600">→</span>
+          <span className={`px-2.5 py-1 rounded-full font-medium whitespace-nowrap transition-colors ${
+            selecting === 'out'
+              ? 'bg-rose-500 text-white'
+              : checkOut
+              ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400'
+              : 'text-gray-400 dark:text-gray-500 border border-dashed border-gray-300 dark:border-gray-600 px-2.5'
           }`}>
-            {checkOut ? checkOut : 'Check-out'}
+            {checkOut ? fmtShort(checkOut) : 'Check-out'}
           </span>
         </div>
 
-        <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-          <ChevronRight size={16} className="text-gray-600 dark:text-gray-300" />
+        <button
+          onClick={nextMonth}
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <ChevronRight size={15} className="text-gray-600 dark:text-gray-300" />
         </button>
       </div>
 
-      {/* Two-month grid */}
-      <div className="flex gap-6">
-        {renderMonth(month1)}
-        <div className="w-px bg-gray-100 dark:bg-gray-700/50 hidden sm:block" />
-        <div className="hidden sm:block flex-1">{renderMonth(month2)}</div>
-      </div>
+      {/* Calendar grid(s) */}
+      {compact ? (
+        // Single month for narrow booking card
+        <div>{renderMonth(month1)}</div>
+      ) : (
+        // Two months for full-width section
+        <div className="flex gap-8">
+          {renderMonth(month1)}
+          <div className="w-px bg-gray-100 dark:bg-gray-800 shrink-0" />
+          {renderMonth(month2)}
+        </div>
+      )}
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50 text-[10px] text-gray-500 dark:text-gray-400">
+      <div className="flex items-center flex-wrap gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400">
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" /> Selected
+          <span className="w-3 h-3 rounded-full bg-rose-500 shrink-0" /> Selected
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-rose-50 dark:bg-rose-900/20 border border-rose-200 inline-block" /> Your stay
+          <span className="w-3 h-3 rounded-sm bg-rose-100 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 shrink-0" /> Your stay
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-600 inline-block" /> Unavailable
+          <span className="w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" /> Unavailable
         </span>
       </div>
 
-      {/* Status / instructions */}
+      {/* Instruction hint */}
       <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2 text-center">
         {!checkIn
           ? '👆 Click a date to set check-in'
@@ -249,12 +284,12 @@ function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClo
           : `✅ ${nights} night${nights > 1 ? 's' : ''} selected`}
       </p>
 
-      {/* Clear + Done buttons */}
+      {/* Actions */}
       <div className="flex gap-2 mt-3">
         <button
           type="button"
           onClick={() => { onChange({ checkIn: '', checkOut: '' }); setSelecting('in') }}
-          className="flex-1 text-xs py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="flex-1 text-xs py-2 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
         >
           Clear dates
         </button>
@@ -262,7 +297,7 @@ function AvailabilityCalendar({ blockedDates, checkIn, checkOut, onChange, onClo
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 text-xs py-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors font-medium"
+            className="flex-1 text-xs py-2 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-colors font-semibold"
           >
             Done ✓
           </button>
@@ -589,9 +624,10 @@ export default function PropertyDetail() {
                     )}
                   </button>
 
-                  {/* Inline calendar popup in booking card */}
+                  {/* Inline calendar popup in booking card — compact single-month */}
                   {showCalendar && (
                     <AvailabilityCalendar
+                      compact
                       blockedDates={property.blockedDates || []}
                       checkIn={booking.checkIn}
                       checkOut={booking.checkOut}
