@@ -1,5 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, Home as HomeIcon, Map, LayoutGrid, Star, MapPin } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import {
+  Search, SlidersHorizontal, X, ChevronLeft, ChevronRight,
+  Home as HomeIcon, Map, LayoutGrid, Star, MapPin, ChevronDown
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -9,7 +12,7 @@ import { useAuth } from '../../context/AuthContext'
 import PropertyCard from '../../components/common/PropertyCard'
 import toast from 'react-hot-toast'
 
-// ─── Fix Leaflet default marker icons broken by Vite bundling ────────────────
+// ─── Fix Leaflet default marker icons (Vite breaks them) ─────────────────────
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -17,7 +20,54 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-// ─── Custom price-bubble marker (like Airbnb) ─────────────────────────────────
+// ─── All Indian States & UTs with center coords ───────────────────────────────
+const INDIA_STATES = {
+  'Andhra Pradesh':       { lat: 15.9129, lng: 79.7400, zoom: 7 },
+  'Arunachal Pradesh':    { lat: 27.1004, lng: 93.6167, zoom: 7 },
+  'Assam':                { lat: 26.2006, lng: 92.9376, zoom: 7 },
+  'Bihar':                { lat: 25.0961, lng: 85.3131, zoom: 7 },
+  'Chhattisgarh':         { lat: 21.2787, lng: 81.8661, zoom: 7 },
+  'Goa':                  { lat: 15.2993, lng: 74.1240, zoom: 9 },
+  'Gujarat':              { lat: 22.2587, lng: 71.1924, zoom: 7 },
+  'Haryana':              { lat: 29.0588, lng: 76.0856, zoom: 8 },
+  'Himachal Pradesh':     { lat: 31.1048, lng: 77.1734, zoom: 8 },
+  'Jharkhand':            { lat: 23.6102, lng: 85.2799, zoom: 7 },
+  'Karnataka':            { lat: 15.3173, lng: 75.7139, zoom: 7 },
+  'Kerala':               { lat: 10.8505, lng: 76.2711, zoom: 7 },
+  'Madhya Pradesh':       { lat: 22.9734, lng: 78.6569, zoom: 7 },
+  'Maharashtra':          { lat: 19.7515, lng: 75.7139, zoom: 7 },
+  'Manipur':              { lat: 24.6637, lng: 93.9063, zoom: 8 },
+  'Meghalaya':            { lat: 25.4670, lng: 91.3662, zoom: 8 },
+  'Mizoram':              { lat: 23.1645, lng: 92.9376, zoom: 8 },
+  'Nagaland':             { lat: 26.1584, lng: 94.5624, zoom: 8 },
+  'Odisha':               { lat: 20.9517, lng: 85.0985, zoom: 7 },
+  'Punjab':               { lat: 31.1471, lng: 75.3412, zoom: 8 },
+  'Rajasthan':            { lat: 27.0238, lng: 74.2179, zoom: 7 },
+  'Sikkim':               { lat: 27.5330, lng: 88.5122, zoom: 9 },
+  'Tamil Nadu':           { lat: 11.1271, lng: 78.6569, zoom: 7 },
+  'Telangana':            { lat: 18.1124, lng: 79.0193, zoom: 7 },
+  'Tripura':              { lat: 23.9408, lng: 91.9882, zoom: 8 },
+  'Uttar Pradesh':        { lat: 26.8467, lng: 80.9462, zoom: 7 },
+  'Uttarakhand':          { lat: 30.0668, lng: 79.0193, zoom: 8 },
+  'West Bengal':          { lat: 22.9868, lng: 87.8550, zoom: 7 },
+  // Union Territories
+  'Andaman and Nicobar Islands': { lat: 11.7401, lng: 92.6586, zoom: 7 },
+  'Chandigarh':           { lat: 30.7333, lng: 76.7794, zoom: 12 },
+  'Dadra and Nagar Haveli and Daman and Diu': { lat: 20.1809, lng: 73.0169, zoom: 10 },
+  'Delhi':                { lat: 28.7041, lng: 77.1025, zoom: 11 },
+  'Jammu and Kashmir':    { lat: 33.7782, lng: 76.5762, zoom: 7 },
+  'Ladakh':               { lat: 34.1526, lng: 77.5770, zoom: 7 },
+  'Lakshadweep':          { lat: 10.5667, lng: 72.6417, zoom: 9 },
+  'Puducherry':           { lat: 11.9416, lng: 79.8083, zoom: 10 },
+}
+
+const STATE_LIST = Object.keys(INDIA_STATES).sort()
+
+// ─── India defaults ───────────────────────────────────────────────────────────
+const INDIA_CENTER = [22.5937, 78.9629]
+const INDIA_ZOOM   = 5
+
+// ─── Price bubble marker ──────────────────────────────────────────────────────
 const createPriceIcon = (price, isSelected = false) => L.divIcon({
   className: '',
   html: `<div style="
@@ -28,39 +78,51 @@ const createPriceIcon = (price, isSelected = false) => L.divIcon({
     font-size:12px;
     font-weight:700;
     border:2px solid ${isSelected ? '#f43f5e' : '#e5e7eb'};
-    box-shadow:0 2px 8px rgba(0,0,0,0.18);
+    box-shadow:0 2px 8px rgba(0,0,0,0.2);
     white-space:nowrap;
     cursor:pointer;
-    transition:all 0.15s;
   ">₹${Number(price).toLocaleString('en-IN')}</div>`,
   iconAnchor: [32, 16],
   popupAnchor: [0, -20],
 })
 
-// ─── Recenter map when properties change ──────────────────────────────────────
-function MapRecenter({ properties }) {
+// ─── MapController: flies to selected state or fits all markers ───────────────
+function MapController({ selectedState, visibleProps }) {
   const map = useMap()
+
   useEffect(() => {
-    const valid = properties.filter(p => p.location?.coordinates?.coordinates?.length === 2)
-    if (!valid.length) return
+    // If a specific state is selected, fly to its center
+    if (selectedState && INDIA_STATES[selectedState]) {
+      const { lat, lng, zoom } = INDIA_STATES[selectedState]
+      map.flyTo([lat, lng], zoom, { animate: true, duration: 0.8 })
+      return
+    }
+
+    // Otherwise fit to visible markers, or show all India
+    const valid = visibleProps.filter(p => p.location?.coordinates?.coordinates?.length === 2)
+    if (!valid.length) {
+      map.flyTo(INDIA_CENTER, INDIA_ZOOM, { animate: true, duration: 0.8 })
+      return
+    }
     if (valid.length === 1) {
       const [lng, lat] = valid[0].location.coordinates.coordinates
-      map.setView([lat, lng], 13)
-    } else {
-      const lats = valid.map(p => p.location.coordinates.coordinates[1])
-      const lngs = valid.map(p => p.location.coordinates.coordinates[0])
-      map.fitBounds([
-        [Math.min(...lats), Math.min(...lngs)],
-        [Math.max(...lats), Math.max(...lngs)],
-      ], { padding: [40, 40] })
+      map.flyTo([lat, lng], 13, { animate: true, duration: 0.8 })
+      return
     }
-  }, [properties])
+    const lats = valid.map(p => p.location.coordinates.coordinates[1])
+    const lngs = valid.map(p => p.location.coordinates.coordinates[0])
+    map.flyToBounds(
+      [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]],
+      { padding: [50, 50], animate: true, duration: 0.8 }
+    )
+  }, [selectedState, visibleProps])
+
   return null
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const PROPERTY_TYPES = ['apartment', 'house', 'villa', 'studio', 'cottage', 'cabin', 'loft', 'penthouse']
-const ROOM_TYPES     = ['entire_place', 'private_room', 'shared_room']
+const PROPERTY_TYPES   = ['apartment', 'house', 'villa', 'studio', 'cottage', 'cabin', 'loft', 'penthouse']
+const ROOM_TYPES       = ['entire_place', 'private_room', 'shared_room']
 const ROOM_TYPE_LABELS = { entire_place: 'Entire Place', private_room: 'Private Room', shared_room: 'Shared Room' }
 const defaultFilters   = { city: '', propertyType: '', roomType: '', minPrice: '', maxPrice: '', sortBy: '' }
 
@@ -68,25 +130,23 @@ const defaultFilters   = { city: '', propertyType: '', roomType: '', minPrice: '
 export default function Home() {
   const { user } = useAuth()
 
-  const [properties,     setProperties]    = useState([])
-  const [pagination,     setPagination]    = useState({ page: 1, pages: 1, total: 0 })
-  const [loading,        setLoading]       = useState(true)
-  const [favIds,         setFavIds]        = useState(new Set())
-  const [filters,        setFilters]       = useState(defaultFilters)
-  const [pendingFilters, setPending]       = useState(defaultFilters)
-  const [showFilters,    setShowFilters]   = useState(false)
-  const [page,           setPage]          = useState(1)
-  const [viewMode,       setViewMode]      = useState('grid')   // 'grid' | 'map'
-  const [selectedPin,    setSelectedPin]   = useState(null)     // property._id
+  const [properties,     setProperties]  = useState([])
+  const [pagination,     setPagination]  = useState({ page: 1, pages: 1, total: 0 })
+  const [loading,        setLoading]     = useState(true)
+  const [favIds,         setFavIds]      = useState(new Set())
+  const [filters,        setFilters]     = useState(defaultFilters)
+  const [pendingFilters, setPending]     = useState(defaultFilters)
+  const [showFilters,    setShowFilters] = useState(false)
+  const [page,           setPage]        = useState(1)
+  const [viewMode,       setViewMode]    = useState('grid')    // 'grid' | 'map'
+  const [selectedPin,    setSelectedPin] = useState(null)      // hovered property _id
+  const [selectedState,  setSelectedState] = useState('')      // state filter on map
 
   // Fetch favorites
   useEffect(() => {
     if (!user) { setFavIds(new Set()); return }
     api.get('/favorites')
-      .then(res => {
-        const ids = (res.data.data || []).map(f => f.property?._id || f._id)
-        setFavIds(new Set(ids))
-      })
+      .then(res => setFavIds(new Set((res.data.data || []).map(f => f.property?._id || f._id))))
       .catch(() => {})
   }, [user])
 
@@ -104,21 +164,43 @@ export default function Home() {
       const res = await api.get(`/properties?${params}`)
       setProperties(res.data.data?.properties || [])
       setPagination(res.data.data?.pagination || { page: 1, pages: 1, total: 0 })
-    } catch {
-      toast.error('Failed to load properties')
-    } finally {
-      setLoading(false)
-    }
+    } catch { toast.error('Failed to load properties') }
+    finally  { setLoading(false) }
   }, [])
 
   useEffect(() => { fetchProperties(filters, page) }, [filters, page, fetchProperties])
+
+  // When switching to map view, auto-set state from search filter
+  useEffect(() => {
+    if (viewMode === 'map' && filters.city) {
+      // Try to match searched city's state from loaded properties
+      const match = properties.find(p =>
+        p.location?.city?.toLowerCase().includes(filters.city.toLowerCase())
+      )
+      if (match?.location?.state) setSelectedState(match.location.state)
+    }
+  }, [viewMode])
 
   const applyFilters = () => { setFilters(pendingFilters); setPage(1); setShowFilters(false) }
   const clearFilters = () => { setPending(defaultFilters); setFilters(defaultFilters); setPage(1); setShowFilters(false) }
   const hasActiveFilters = Object.values(filters).some(v => v !== '')
 
-  // Properties with valid coordinates (for map)
+  // Properties that have valid GPS coordinates
   const mappableProps = properties.filter(p => p.location?.coordinates?.coordinates?.length === 2)
+
+  // Properties filtered by selected state (for map sidebar + markers)
+  const stateFilteredProps = selectedState
+    ? mappableProps.filter(p =>
+        p.location?.state?.toLowerCase().trim() === selectedState.toLowerCase().trim()
+      )
+    : mappableProps
+
+  // Count properties per state (for dropdown labels)
+  const stateCountMap = mappableProps.reduce((acc, p) => {
+    const s = p.location?.state
+    if (s) acc[s] = (acc[s] || 0) + 1
+    return acc
+  }, {})
 
   const Skeleton = () => (
     <div className="animate-pulse">
@@ -138,10 +220,10 @@ export default function Home() {
           Find your perfect stay
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6">
-          Browse thousands of properties — no account needed to explore
+          Browse thousands of properties across India — no account needed to explore
         </p>
 
-        {/* Search + Filter + View toggle row */}
+        {/* Search row */}
         <div className="flex gap-2 max-w-2xl mx-auto">
           <div className="relative flex-1">
             <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
@@ -236,24 +318,21 @@ export default function Home() {
             return (
               <span key={key} className="flex items-center gap-1.5 text-xs bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-200 dark:border-rose-800 px-2.5 py-1 rounded-full">
                 {labels[key]}
-                <button onClick={() => {
-                  const next = { ...filters, [key]: '' }
-                  setFilters(next); setPending(next); setPage(1)
-                }}><X size={11} /></button>
+                <button onClick={() => { const n = { ...filters, [key]: '' }; setFilters(n); setPending(n); setPage(1) }}>
+                  <X size={11} />
+                </button>
               </span>
             )
           })}
         </div>
       )}
 
-      {/* ── Results bar: count + view toggle ── */}
+      {/* ── Results bar: count + Grid/Map toggle ── */}
       {!loading && pagination.total > 0 && (
         <div className="flex items-center justify-between mb-5">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {pagination.total} propert{pagination.total === 1 ? 'y' : 'ies'} found
           </p>
-
-          {/* Grid / Map toggle */}
           <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1 gap-1">
             <button
               onClick={() => setViewMode('grid')}
@@ -279,7 +358,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── Grid View ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          GRID VIEW
+      ══════════════════════════════════════════════════════════════ */}
       {viewMode === 'grid' && (
         <>
           {loading ? (
@@ -295,9 +376,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {properties.map(p => (
-                <PropertyCard key={p._id} property={p} isFavorited={favIds.has(p._id)} />
-              ))}
+              {properties.map(p => <PropertyCard key={p._id} property={p} isFavorited={favIds.has(p._id)} />)}
             </div>
           )}
 
@@ -311,18 +390,17 @@ export default function Home() {
               {Array.from({ length: pagination.pages }, (_, i) => i + 1)
                 .filter(n => n === 1 || n === pagination.pages || Math.abs(n - page) <= 2)
                 .reduce((acc, n, idx, arr) => {
-                  if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…')
+                  if (idx > 0 && n - arr[idx-1] > 1) acc.push('…')
                   acc.push(n)
                   return acc
                 }, [])
-                .map((n, i) => n === '…' ? (
-                  <span key={`dot-${i}`} className="px-1 text-gray-400 dark:text-gray-500">…</span>
-                ) : (
-                  <button key={n} onClick={() => setPage(n)}
-                    className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
-                      n === page ? 'bg-rose-500 text-white' : 'border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}>{n}</button>
-                ))}
+                .map((n, i) => n === '…'
+                  ? <span key={`d${i}`} className="px-1 text-gray-400">…</span>
+                  : <button key={n} onClick={() => setPage(n)}
+                      className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                        n === page ? 'bg-rose-500 text-white' : 'border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}>{n}</button>
+                )}
               <button onClick={() => setPage(p => Math.min(pagination.pages, p + 1))} disabled={page === pagination.pages}
                 className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                 <ChevronRight size={18} />
@@ -332,155 +410,196 @@ export default function Home() {
         </>
       )}
 
-      {/* ── Map View ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          MAP VIEW
+      ══════════════════════════════════════════════════════════════ */}
       {viewMode === 'map' && (
-        <div className="flex gap-4 h-[75vh] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="space-y-3">
 
-          {/* Left — scrollable property list */}
-          <div className="w-80 shrink-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
-            {loading ? (
-              <div className="p-4 space-y-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="animate-pulse flex gap-3">
-                    <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0" />
-                    <div className="flex-1 space-y-2 pt-1">
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
-                    </div>
-                  </div>
+          {/* State / UT filter bar */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative">
+              <MapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-500 pointer-events-none" />
+              <select
+                value={selectedState}
+                onChange={e => setSelectedState(e.target.value)}
+                className="input-field pl-8 pr-8 text-sm appearance-none cursor-pointer min-w-[200px]"
+              >
+                <option value="">🇮🇳 All India</option>
+                {STATE_LIST.map(s => (
+                  <option key={s} value={s}>
+                    {s}{stateCountMap[s] ? ` (${stateCountMap[s]})` : ''}
+                  </option>
                 ))}
-              </div>
-            ) : mappableProps.length === 0 ? (
-              <div className="p-6 text-center text-gray-400 dark:text-gray-500 text-sm mt-10">
-                <Map size={32} className="mx-auto mb-3 opacity-40" />
-                No properties with location data
-              </div>
-            ) : (
-              <div className="p-3 space-y-2">
-                <p className="text-xs text-gray-400 dark:text-gray-500 px-1 py-2">
-                  {mappableProps.length} propert{mappableProps.length === 1 ? 'y' : 'ies'} on map
-                </p>
-                {mappableProps.map(p => (
-                  <Link
-                    key={p._id}
-                    to={`/property/${p._id}`}
-                    onMouseEnter={() => setSelectedPin(p._id)}
-                    onMouseLeave={() => setSelectedPin(null)}
-                    className={`flex gap-3 p-2 rounded-xl transition-all cursor-pointer border ${
-                      selectedPin === p._id
-                        ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/20'
-                        : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    <img
-                      src={p.images?.[0]?.url || 'https://placehold.co/80x80?text=🏠'}
-                      alt={p.title}
-                      className="w-20 h-20 rounded-lg object-cover shrink-0 bg-gray-100 dark:bg-gray-700"
-                      onError={e => e.target.src = 'https://placehold.co/80x80?text=🏠'}
-                    />
-                    <div className="flex-1 min-w-0 py-0.5">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{p.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                        <MapPin size={11} /> {p.location?.city}
-                      </p>
-                      {p.ratings?.average > 0 && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                          <Star size={11} className="fill-gray-600 dark:fill-gray-300 text-gray-600 dark:text-gray-300" />
-                          {p.ratings.average} · {p.ratings.count} reviews
-                        </p>
-                      )}
-                      <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
-                        ₹{p.pricing?.basePrice?.toLocaleString()}
-                        <span className="font-normal text-gray-400 text-xs"> /night</span>
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {selectedState && (
+              <button
+                onClick={() => setSelectedState('')}
+                className="flex items-center gap-1.5 text-xs text-rose-500 border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 px-3 py-1.5 rounded-full hover:bg-rose-100 transition-colors"
+              >
+                <X size={11} /> Clear state filter
+              </button>
             )}
+
+            <p className="text-xs text-gray-400 dark:text-gray-500 ml-auto">
+              {selectedState
+                ? `${stateFilteredProps.length} propert${stateFilteredProps.length === 1 ? 'y' : 'ies'} in ${selectedState}`
+                : `${mappableProps.length} propert${mappableProps.length === 1 ? 'y' : 'ies'} on map`
+              }
+            </p>
           </div>
 
-          {/* Right — Leaflet map */}
-          <div className="flex-1 relative">
-            <MapContainer
-              center={[20.5937, 78.9629]}  // Center of India as default
-              zoom={5}
-              style={{ height: '100%', width: '100%' }}
-              className="z-0"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
+          {/* Map + Sidebar layout */}
+          <div className="flex gap-0 h-[75vh] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
 
-              {/* Auto-recenter when properties load */}
-              <MapRecenter properties={mappableProps} />
-
-              {/* Property markers */}
-              {mappableProps.map(p => {
-                const [lng, lat] = p.location.coordinates.coordinates
-                const isSelected = selectedPin === p._id
-                return (
-                  <Marker
-                    key={p._id}
-                    position={[lat, lng]}
-                    icon={createPriceIcon(p.pricing?.basePrice || 0, isSelected)}
-                    eventHandlers={{
-                      mouseover: () => setSelectedPin(p._id),
-                      mouseout:  () => setSelectedPin(null),
-                    }}
-                  >
-                    <Popup className="property-popup" maxWidth={220}>
-                      <Link to={`/property/${p._id}`} className="block no-underline">
-                        <img
-                          src={p.images?.[0]?.url || 'https://placehold.co/220x130?text=🏠'}
-                          alt={p.title}
-                          className="w-full h-32 object-cover rounded-lg mb-2"
-                          onError={e => e.target.src = 'https://placehold.co/220x130?text=🏠'}
-                          style={{ display: 'block' }}
-                        />
-                        <p style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 2, lineHeight: 1.3 }}>
-                          {p.title}
-                        </p>
-                        <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
-                          📍 {p.location?.city}, {p.location?.state}
+            {/* Left — property list */}
+            <div className="w-72 shrink-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
+              {loading ? (
+                <div className="p-3 space-y-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="animate-pulse flex gap-3">
+                      <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0" />
+                      <div className="flex-1 space-y-2 pt-1">
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : stateFilteredProps.length === 0 ? (
+                <div className="p-6 text-center mt-16">
+                  <Map size={36} className="mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No properties here</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {selectedState ? `No listings found in ${selectedState}` : 'No properties have location data'}
+                  </p>
+                </div>
+              ) : (
+                <div className="p-2">
+                  {stateFilteredProps.map(p => (
+                    <Link
+                      key={p._id}
+                      to={`/property/${p._id}`}
+                      onMouseEnter={() => setSelectedPin(p._id)}
+                      onMouseLeave={() => setSelectedPin(null)}
+                      className={`flex gap-2.5 p-2 rounded-xl mb-1 transition-all border ${
+                        selectedPin === p._id
+                          ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/20'
+                          : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                      }`}
+                    >
+                      <img
+                        src={p.images?.[0]?.url || 'https://placehold.co/72x72?text=🏠'}
+                        alt={p.title}
+                        className="w-16 h-16 rounded-lg object-cover shrink-0 bg-gray-100 dark:bg-gray-700"
+                        onError={e => e.target.src = 'https://placehold.co/72x72?text=🏠'}
+                      />
+                      <div className="flex-1 min-w-0 py-0.5">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1 leading-snug">{p.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                          <MapPin size={10} className="shrink-0" />
+                          <span className="truncate">{p.location?.city}, {p.location?.state}</span>
                         </p>
                         {p.ratings?.average > 0 && (
-                          <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
-                            ⭐ {p.ratings.average} · {p.ratings.count} reviews
+                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                            <Star size={10} className="fill-amber-400 text-amber-400 shrink-0" />
+                            {p.ratings.average} · {p.ratings.count} reviews
                           </p>
                         )}
-                        <p style={{ fontWeight: 700, fontSize: 14, color: '#f43f5e' }}>
-                          ₹{p.pricing?.basePrice?.toLocaleString()} <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12 }}>/night</span>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                          ₹{p.pricing?.basePrice?.toLocaleString()}
+                          <span className="font-normal text-gray-400 text-xs"> /night</span>
                         </p>
-                        <div style={{ marginTop: 8, background: '#f43f5e', color: 'white', textAlign: 'center', padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 600 }}>
-                          View Property →
-                        </div>
-                      </Link>
-                    </Popup>
-                  </Marker>
-                )
-              })}
-            </MapContainer>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Map overlay: no coords warning */}
-            {!loading && properties.length > 0 && mappableProps.length < properties.length && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 px-3 py-1.5 rounded-full shadow border border-gray-200 dark:border-gray-700 z-10">
-                {properties.length - mappableProps.length} propert{properties.length - mappableProps.length === 1 ? 'y' : 'ies'} without location data hidden
-              </div>
-            )}
+            {/* Right — Leaflet Map */}
+            <div className="flex-1 relative">
+              <MapContainer
+                center={INDIA_CENTER}
+                zoom={INDIA_ZOOM}
+                minZoom={4}
+                maxZoom={18}
+                style={{ height: '100%', width: '100%' }}
+                className="z-0"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+
+                {/* Fly to state or fit markers */}
+                <MapController selectedState={selectedState} visibleProps={stateFilteredProps} />
+
+                {/* Property markers */}
+                {stateFilteredProps.map(p => {
+                  const [lng, lat] = p.location.coordinates.coordinates
+                  const isSelected = selectedPin === p._id
+                  return (
+                    <Marker
+                      key={p._id}
+                      position={[lat, lng]}
+                      icon={createPriceIcon(p.pricing?.basePrice || 0, isSelected)}
+                      eventHandlers={{
+                        mouseover: () => setSelectedPin(p._id),
+                        mouseout:  () => setSelectedPin(null),
+                      }}
+                    >
+                      <Popup maxWidth={220}>
+                        <Link to={`/property/${p._id}`} className="block no-underline">
+                          <img
+                            src={p.images?.[0]?.url || 'https://placehold.co/220x130?text=🏠'}
+                            alt={p.title}
+                            style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, display: 'block', marginBottom: 8 }}
+                            onError={e => e.target.src = 'https://placehold.co/220x130?text=🏠'}
+                          />
+                          <p style={{ fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 3, lineHeight: 1.3 }}>{p.title}</p>
+                          <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 3 }}>
+                            📍 {p.location?.city}, {p.location?.state}
+                          </p>
+                          {p.ratings?.average > 0 && (
+                            <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>
+                              ⭐ {p.ratings.average} ({p.ratings.count} reviews)
+                            </p>
+                          )}
+                          <p style={{ fontWeight: 700, fontSize: 14, color: '#f43f5e', marginBottom: 8 }}>
+                            ₹{p.pricing?.basePrice?.toLocaleString()}
+                            <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 11 }}> /night</span>
+                          </p>
+                          <div style={{ background: '#f43f5e', color: 'white', textAlign: 'center', padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 600 }}>
+                            View Property →
+                          </div>
+                        </Link>
+                      </Popup>
+                    </Marker>
+                  )
+                })}
+              </MapContainer>
+
+              {/* Badge: properties without coordinates */}
+              {!loading && properties.length > 0 && mappableProps.length < properties.length && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-white dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 px-3 py-1.5 rounded-full shadow border border-gray-200 dark:border-gray-700 pointer-events-none">
+                  {properties.length - mappableProps.length} propert{properties.length - mappableProps.length === 1 ? 'y' : 'ies'} without GPS hidden
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {/* ── Guest CTA ── */}
-      {!user && properties.length > 0 && (
+      {!user && properties.length > 0 && viewMode === 'grid' && (
         <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 text-white text-center">
           <h2 className="text-xl font-bold mb-2">Ready to book your perfect stay?</h2>
-          <p className="text-rose-100 text-sm mb-4">
-            Create a free account to save favorites, book properties, and message hosts.
-          </p>
+          <p className="text-rose-100 text-sm mb-4">Create a free account to save favorites, book properties, and message hosts.</p>
           <div className="flex items-center justify-center gap-3">
             <a href="/register" className="bg-white text-rose-600 font-semibold px-5 py-2 rounded-lg text-sm hover:bg-rose-50 transition-colors">Sign up free</a>
             <a href="/login"    className="border border-rose-300 text-white font-medium px-5 py-2 rounded-lg text-sm hover:bg-rose-400/30 transition-colors">Log in</a>
