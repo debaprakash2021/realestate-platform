@@ -4,10 +4,21 @@ import {
   Star, MapPin, Users, Bed, Bath, Wifi, Car, Wind, Flame, Tv,
   Utensils, ArrowLeft, MessageCircle, ChevronLeft, ChevronRight, X, CalendarDays
 } from 'lucide-react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
 import { savePendingAction, consumePendingAction } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
+
+// ─── Fix Leaflet default marker icons broken by Vite ─────────────────────────
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -527,6 +538,44 @@ export default function PropertyDetail() {
               />
             </div>
           )}
+
+          {/* ── Where you'll be (Location Map) ── */}
+          {property.location?.coordinates?.coordinates?.length === 2 && (() => {
+            const [lng, lat] = property.location.coordinates.coordinates
+            return (
+              <div>
+                <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
+                  <MapPin size={20} className="text-rose-500" /> Where you'll be
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  {property.location.address}, {property.location.city}, {property.location.state}
+                </p>
+                <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 h-64">
+                  <MapContainer
+                    center={[lat, lng]}
+                    zoom={14}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom={false}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker position={[lat, lng]}>
+                      <Popup>
+                        <div style={{ minWidth: 160 }}>
+                          <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{property.title}</p>
+                          <p style={{ fontSize: 12, color: '#6b7280' }}>
+                            {property.location.city}, {property.location.state}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Host */}
           <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
