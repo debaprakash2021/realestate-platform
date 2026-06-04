@@ -15,13 +15,14 @@ const authValidation = {
     body('password')
       .notEmpty().withMessage('Password is required')
       .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
-      .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
-      .matches(/[0-9]/).withMessage('Password must contain at least one number')
-      .matches(/[@$!%*?&#^()_\-+=]/).withMessage('Password must contain at least one special character (@$!%*?&#)'),
+      .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter (A–Z)')
+      .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter (a–z)')
+      .matches(/[0-9]/).withMessage('Password must contain at least one number (0–9)')
+      .matches(/[@$!%*?&#^()_\-+=]/).withMessage('Password must contain at least one special character: @ $ ! % * ? & # ^ ( ) _ - + ='),
     body('role')
       .optional()
-      .isIn(['guest', 'host']).withMessage('Role must be guest or host')
+      .trim()
+      .isIn(['guest', 'host']).withMessage('Role must be either guest or host')
   ],
   login: [
     body('email')
