@@ -59,9 +59,14 @@ function RegistrationForm({ onSuccess }) {
       toast.success(`Code sent to ${form.email}!`)
       onSuccess(form.email, form.role)
     } catch (err) {
+      console.error('Registration error:', err.response?.data)
       const msg = err.response?.data?.message || 'Registration failed'
-      // If already registered but unverified — still proceed to OTP step
-      if (err.response?.data?.data?.requiresVerification || msg.includes('OTP has been sent')) {
+      // If validation failed, show detailed errors
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+        const firstError = err.response.data.errors[0]?.msg || msg
+        toast.error(firstError)
+      } else if (err.response?.data?.data?.requiresVerification || msg.includes('OTP has been sent')) {
+        // If already registered but unverified — still proceed to OTP step
         toast(msg, { icon: '📧' })
         onSuccess(form.email, form.role)
       } else {
