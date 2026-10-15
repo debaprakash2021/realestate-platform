@@ -50,3 +50,11 @@ Thumbs.db
 # Optional
 .cache/
 .parcel-cache/
+
+
+ARCHITECTURE.md
+DESIGN.md
+MEMORY.md
+PRD.md
+RULES.md
+TASKS.md
