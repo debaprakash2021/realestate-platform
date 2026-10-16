@@ -1,7 +1,17 @@
 import axios from 'axios'
 
+const normalizeBaseURL = (value) => {
+  const fallback = 'http://localhost:5000/api'
+  if (!value) return fallback
+
+  const trimmed = value.trim().replace(/\/+$/, '')
+  if (!trimmed) return fallback
+
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: normalizeBaseURL(import.meta.env.VITE_API_URL),
   headers: { 'Content-Type': 'application/json' }
 })
 

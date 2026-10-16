@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: realestate-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        value: https://realestate-platform-gamma.vercel.app
+      # Set the following secrets in the Render dashboard (do NOT commit values here):
+      # MONGODB_URI
+      # JWT_SECRET
+      # JWT_REFRESH_SECRET
+      # CLOUDINARY_CLOUD_NAME
+      # CLOUDINARY_API_KEY
+      # CLOUDINARY_API_SECRET
+      # SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, FROM_NAME

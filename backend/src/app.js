@@ -30,14 +30,54 @@ if (!fs.existsSync('logs')) {
 // Initialize app
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// ─── CORS ───────────────────────────────────────────────────────
+// Hard-code both known origins. CLIENT_URL is stripped of any
+// accidental path suffix (e.g. /register) before comparison.
+const STATIC_ORIGINS = [
+  'http://localhost:5173',
+  'https://realestate-platform-gamma.vercel.app',
+];
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true
-}));
+// Strip any path/query from CLIENT_URL so a mis-configured Render
+// env variable like "https://…vercel.app/register" doesn't leak
+// into the Allow-Origin header.
+const rawClientUrl = (process.env.CLIENT_URL || '').trim().replace(/\/+$/, '');
+if (rawClientUrl) {
+  try {
+    const parsed = new URL(rawClientUrl);
+    const cleanOrigin = parsed.origin; // scheme + host only
+    if (!STATIC_ORIGINS.includes(cleanOrigin)) {
+      STATIC_ORIGINS.push(cleanOrigin);
+    }
+  } catch {
+    // invalid URL — ignore
+  }
+}
+
+// ── Startup diagnostic (no secrets logged) ──────────────────────
+console.log('[CORS] Allowed origins at startup:', JSON.stringify(STATIC_ORIGINS));
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow server-to-server / curl requests (no Origin header)
+    if (!origin) return callback(null, true);
+    const allowed = STATIC_ORIGINS.includes(origin);
+    console.log(`[CORS] origin="${origin}" allowed=${allowed}`);
+    if (allowed) return callback(null, true);
+    return callback(new Error(`CORS: origin '${origin}' is not allowed`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
+// CORS must be registered BEFORE every other middleware so that
+// Access-Control-Allow-Origin is set even on 4xx / 5xx responses.
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Security middleware (after CORS so helmet doesn't interfere with preflight)
+app.use(helmet());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -56,9 +96,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Logging
+// Logging — use 'combined' in production for Render log visibility
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined'));
 }
 
 // Health check endpoint
@@ -92,6 +134,8 @@ app.use((req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+
 
 // Global error handler
 app.use(errorHandler);
